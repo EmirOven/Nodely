@@ -116,6 +116,26 @@ export interface AiNodeData {
 	isExecuting?: boolean;
 }
 
+export interface TelegramTriggerData {
+	title: string;
+	filterCommand?: string;
+	description?: string;
+	isExecuting?: boolean;
+}
+
+export interface TelegramSendMessageData {
+	title: string;
+	action: 'sendMessage' | 'sendPhoto' | 'answerCallbackQuery';
+	botToken?: string;
+	chatId: string;
+	text: string;
+	photoUrl?: string;
+	parseMode: 'HTML' | 'MarkdownV2' | 'None';
+	replyToMessage?: boolean;
+	description?: string;
+	isExecuting?: boolean;
+}
+
 // Backwards compatibility alias
 export type OpenAiData = AiNodeData;
 
@@ -132,7 +152,11 @@ export type NodelyNodeType =
 	| 'googleAuthNode'
 	| 'userManagementNode'
 	| 'aiNode'
-	| 'openAiNode';
+	| 'openAiNode'
+	| 'telegramTrigger'
+	| 'telegramSendMessage';
+
+export type NodeflowNodeType = NodelyNodeType;
 
 export interface ExecutionLog {
 	nodeId: string;

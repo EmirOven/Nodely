@@ -224,7 +224,7 @@
 </script>
 
 <svelte:head>
-	<title>Project Users & Auth — Nodely</title>
+	<title>Project Users & Auth — Nodeflow</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none">
@@ -255,7 +255,7 @@
 						<span
 							class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 						>
-							v0.4.1
+							v0.5.0
 						</span>
 					</div>
 					<p class="text-xs text-slate-400">Nodeflow Auth Database & User Directory</p>

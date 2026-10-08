@@ -16,7 +16,9 @@ import type {
 	GoogleAuthData,
 	UserManagementData,
 	OpenAiData,
-	AiNodeData
+	AiNodeData,
+	TelegramTriggerData,
+	TelegramSendMessageData
 } from '../types';
 
 // Global in-memory storage for simulated database
@@ -52,13 +54,19 @@ export async function executeFlow(
 		});
 	};
 
-	// Find the trigger node
-	const triggerNode = nodes.find((n: Node) => n.type === 'httpTrigger');
+	// Find the trigger node (match HTTP method, or default HTTP trigger, or Telegram Bot webhook)
+	const triggerNode =
+		nodes.find(
+			(n: Node) => n.type === 'httpTrigger' && ((n.data as any)?.method === request.method)
+		) ||
+		nodes.find((n: Node) => n.type === 'httpTrigger') ||
+		nodes.find((n: Node) => n.type === 'telegramTrigger');
+
 	if (!triggerNode) {
 		return {
 			success: false,
 			statusCode: 400,
-			responseBody: { error: 'No HTTP Trigger node found in this API workflow' },
+			responseBody: { error: 'No HTTP or Telegram Trigger entrypoint found in this workflow' },
 			responseHeaders: { 'content-type': 'application/json' },
 			durationMs: Math.round(performance.now() - startTime),
 			executedNodeIds: [],
@@ -68,9 +76,9 @@ export async function executeFlow(
 				nodeTitle: 'System',
 				timestamp: Date.now(),
 				level: 'error',
-				message: 'Cannot execute flow without an HTTP Trigger starting node.'
+				message: 'Cannot execute flow without an HTTP Trigger or Telegram Bot Trigger starting node.'
 			}],
-			error: 'No HTTP Trigger node found.'
+			error: 'No Trigger starting node found.'
 		};
 	}
 
@@ -803,6 +811,174 @@ export async function executeFlow(
 					nodeTitle,
 					success ? 'info' : 'error',
 					`AI Node (${provider}/${model}): ${success ? 'COMPLETED' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
+				);
+			} else if (nodeType === 'telegramTrigger') {
+				const tgData = nodeData as unknown as TelegramTriggerData;
+				const update = payload || {};
+				const msg = update.message || update.callback_query?.message || {};
+				const from = update.message?.from || update.callback_query?.from || {};
+				const text = String(msg.text || update.text || update.messageText || update.caption || '');
+				const chatId = msg.chat?.id || update.chat_id || update.chatId || from.id || 123456789;
+				const messageId = msg.message_id || update.message_id || update.messageId || 1;
+				const isCommand = text.startsWith('/');
+				const command = isCommand ? text.slice(1).split(' ')[0].split('@')[0] : '';
+				const filterCmd = String(tgData.filterCommand || '').trim();
+
+				if (filterCmd) {
+					const normalizedFilter = filterCmd.startsWith('/') ? filterCmd.slice(1) : filterCmd;
+					if (command.toLowerCase() !== normalizedFilter.toLowerCase() && text.toLowerCase() !== filterCmd.toLowerCase()) {
+						addLog(
+							currentId,
+							nodeTitle,
+							'warn',
+							`Incoming message "${text}" does not match filter "${filterCmd}". Flow will proceed with warning.`
+						);
+					}
+				}
+
+				const parsedTelegram = {
+					updateId: update.update_id || Date.now(),
+					chatId,
+					messageId,
+					text,
+					isCommand,
+					command,
+					sender: {
+						id: from.id || chatId,
+						username: from.username || 'telegram_user',
+						firstName: from.first_name || 'Telegram User',
+						lastName: from.last_name || ''
+					},
+					callbackData: update.callback_query?.data || ''
+				};
+
+				state.telegram = parsedTelegram;
+				state[currentId] = parsedTelegram;
+				state.lastResult = parsedTelegram;
+				if (typeof payload === 'object' && payload !== null) {
+					payload.telegram = parsedTelegram;
+					payload.chatId = chatId;
+					payload.text = text;
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					'info',
+					`Telegram Webhook update parsed: chat ID ${chatId}, user @${parsedTelegram.sender.username}, text "${text}"`
+				);
+				stepOutput = parsedTelegram;
+				nextHandleOut = 'output';
+			} else if (nodeType === 'telegramSendMessage') {
+				const tgData = nodeData as unknown as TelegramSendMessageData;
+				const action = tgData.action || 'sendMessage';
+
+				const interpolate = (tpl: string) => {
+					if (!tpl) return '';
+					return tpl.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_, expr) => {
+						try {
+							const fn = new Function('req', 'payload', 'state', `return (${expr});`);
+							const val = fn(req, payload, state);
+							return val !== undefined && val !== null
+								? typeof val === 'object'
+									? JSON.stringify(val)
+									: String(val)
+								: '';
+						} catch {
+							return '';
+						}
+					});
+				};
+
+				const env = typeof process !== 'undefined' ? process.env : ({} as any);
+				let botToken = (tgData.botToken || '').trim();
+				if (!botToken) {
+					botToken = env?.TELEGRAM_BOT_TOKEN || '';
+				}
+
+				const resolvedChatId = interpolate(tgData.chatId || '{{telegram.chatId}}') || state.telegram?.chatId || payload.chatId || 123456789;
+				const resolvedText = interpolate(tgData.text || '') || 'Hello from Nodeflow Telegram bot!';
+				const resolvedPhoto = interpolate(tgData.photoUrl || '');
+
+				let success = true;
+				let errorMsg: string | undefined = undefined;
+				let apiResult: any = null;
+
+				if (botToken) {
+					try {
+						addLog(currentId, nodeTitle, 'info', `Calling Telegram Bot API (${action}) to chat ${resolvedChatId}...`);
+						const url = `https://api.telegram.org/bot${botToken}/${action}`;
+						const bodyPayload: any = {
+							chat_id: resolvedChatId,
+							parse_mode: tgData.parseMode !== 'None' ? tgData.parseMode : undefined
+						};
+						if (action === 'sendMessage') {
+							bodyPayload.text = resolvedText;
+						} else if (action === 'sendPhoto') {
+							bodyPayload.photo = resolvedPhoto;
+							bodyPayload.caption = resolvedText;
+						} else if (action === 'answerCallbackQuery') {
+							bodyPayload.callback_query_id = state.telegram?.update?.callback_query?.id || 'cq_1';
+							bodyPayload.text = resolvedText;
+						}
+
+						const res = await fetch(url, {
+							method: 'POST',
+							headers: { 'Content-Type': 'application/json' },
+							body: JSON.stringify(bodyPayload)
+						});
+						apiResult = await res.json();
+						if (res.ok && apiResult.ok) {
+							success = true;
+						} else {
+							errorMsg = apiResult.description || `Telegram Bot API error ${res.status}`;
+							success = false;
+						}
+					} catch (e: any) {
+						errorMsg = e.message || 'Failed to dispatch Telegram request';
+						success = false;
+					}
+				} else {
+					addLog(
+						currentId,
+						nodeTitle,
+						'info',
+						`Simulating Telegram Bot API ${action} (no live bot token configured in node or Settings).`
+					);
+					apiResult = {
+						ok: true,
+						simulated: true,
+						result: {
+							message_id: Math.floor(Math.random() * 80000) + 1000,
+							chat: { id: resolvedChatId, type: 'private' },
+							date: Math.floor(Date.now() / 1000),
+							text: resolvedText
+						}
+					};
+					success = true;
+				}
+
+				nextHandleOut = success ? 'success' : 'error';
+				stepOutput = {
+					action,
+					chatId: resolvedChatId,
+					text: resolvedText,
+					success,
+					error: errorMsg,
+					telegramResponse: apiResult
+				};
+				state[currentId] = stepOutput;
+				state.lastResult = stepOutput;
+				state.telegramResponse = apiResult;
+				if (typeof payload === 'object' && payload !== null) {
+					payload.telegramResponse = apiResult;
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					success ? 'info' : 'error',
+					`Telegram Bot (${action}): ${success ? 'SENT successfully' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
 				);
 			} else if (nodeType === 'httpResponse') {
 				const respData = nodeData as unknown as HttpResponseData;

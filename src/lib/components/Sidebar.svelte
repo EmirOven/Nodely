@@ -18,6 +18,7 @@
 		Sparkles
 	} from '@lucide/svelte';
 	import GoogleIcon from './icons/GoogleIcon.svelte';
+	import TelegramIcon from './icons/TelegramIcon.svelte';
 	import type { NodelyNodeType } from '../types';
 
 	interface Props {
@@ -124,6 +125,22 @@
 			category: 'AI & LLM',
 			icon: Sparkles,
 			color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500/60'
+		},
+		{
+			type: 'telegramTrigger' as NodelyNodeType,
+			title: 'Telegram Bot Trigger',
+			desc: 'Receive inbound Telegram webhook updates (messages, commands, callbacks)',
+			category: 'Telegram Bots',
+			icon: TelegramIcon,
+			color: 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:border-sky-500/60'
+		},
+		{
+			type: 'telegramSendMessage' as NodelyNodeType,
+			title: 'Telegram Send Message',
+			desc: 'Dispatch messages, photos, and replies to Telegram chats via Bot API',
+			category: 'Telegram Bots',
+			icon: TelegramIcon,
+			color: 'text-sky-400 bg-sky-500/10 border-sky-500/30 hover:border-sky-500/60'
 		}
 	];
 

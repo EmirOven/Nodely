@@ -17,9 +17,11 @@
 		Users,
 		SlidersHorizontal,
 		Cpu,
-		Terminal
+		Terminal,
+		AlertTriangle
 	} from '@lucide/svelte';
 	import GoogleIcon from '../../lib/components/icons/GoogleIcon.svelte';
+	import TelegramIcon from '../../lib/components/icons/TelegramIcon.svelte';
 	import type { NodelySettings } from '../../lib/server/settingsStore';
 
 	let settings = $state<NodelySettings>({
@@ -36,6 +38,7 @@
 		openaiDefaultTemperature: 0.7,
 		googleClientId: '',
 		googleClientSecret: '',
+		telegramBotToken: '',
 		jwtSecret: '',
 		jwtExpiresIn: '7d',
 		corsOrigins: '*',
@@ -49,8 +52,11 @@
 	let savedSuccess = $state(false);
 	let showApiKey = $state(false);
 	let showJwtSecret = $state(false);
+	let showTelegramToken = $state(false);
 	let testingAi = $state(false);
 	let testAiResult = $state<{ success: boolean; message: string } | null>(null);
+	let testingTelegram = $state(false);
+	let testTelegramResult = $state<{ success: boolean; bot?: any; error?: string } | null>(null);
 
 	const aiProvidersList = [
 		{ id: 'openai' as const, name: 'OpenAI', badge: 'GPT-4o' },
@@ -115,8 +121,34 @@
 	}
 
 	function generateRandomJwtSecret() {
-		const rand = 'nodely_jwt_' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+		const rand = 'nodeflow_jwt_' + Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
 		settings.jwtSecret = rand;
+	}
+
+	async function testTelegramConnection() {
+		if (!settings.telegramBotToken?.trim()) {
+			testTelegramResult = { success: false, error: 'Please enter a Telegram Bot Token first.' };
+			return;
+		}
+		testingTelegram = true;
+		testTelegramResult = null;
+		try {
+			const res = await fetch('/api/settings/test-telegram', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ token: settings.telegramBotToken.trim() })
+			});
+			const data = await res.json();
+			if (res.ok && data.success) {
+				testTelegramResult = { success: true, bot: data.bot };
+			} else {
+				testTelegramResult = { success: false, error: data.error || 'Failed to authenticate Telegram Bot' };
+			}
+		} catch (e: any) {
+			testTelegramResult = { success: false, error: e.message || 'Network request failed' };
+		} finally {
+			testingTelegram = false;
+		}
 	}
 
 	async function testAiKey(prov: 'openai' | 'anthropic' | 'google' | 'groq' | 'custom') {
@@ -185,7 +217,7 @@
 </script>
 
 <svelte:head>
-	<title>Nodeflow Settings & Secrets — Nodely</title>
+	<title>Nodeflow Settings & Secrets — Nodeflow</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none">
@@ -216,7 +248,7 @@
 						<span
 							class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 						>
-							v0.4.1
+							v0.5.0
 						</span>
 					</div>
 					<p class="text-xs text-slate-400">AI Engine, OAuth Keys & Gateway Defaults</p>
@@ -545,7 +577,99 @@
 					<div class="rounded-xl border border-slate-800/80 bg-slate-950/70 p-3 text-xs text-slate-400 space-y-1">
 						<span class="font-semibold text-slate-300">Setup Note:</span>
 						<p>
-							Configure your Authorized JavaScript Origins in Google Cloud Console to match your Nodely domain (e.g. <code class="font-mono text-slate-300">http://localhost:5173</code>).
+							Configure your Authorized JavaScript Origins in Google Cloud Console to match your Nodeflow domain (e.g. <code class="font-mono text-slate-300">http://localhost:5173</code>).
+						</p>
+					</div>
+				</div>
+			</section>
+
+			<!-- Telegram Bot API Settings -->
+			<section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl space-y-5">
+				<div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+					<div class="flex items-center gap-3">
+						<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-500/10 text-sky-400 border border-sky-500/20">
+							<TelegramIcon class="h-5 w-5" />
+						</div>
+						<div>
+							<h2 class="text-sm font-bold text-white">Telegram Bot API</h2>
+							<p class="text-xs text-slate-400">Default bot token for Telegram Webhooks and Send Message nodes</p>
+						</div>
+					</div>
+					<span class="rounded bg-sky-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-sky-400">
+						Bot Platform
+					</span>
+				</div>
+
+				<div class="space-y-4">
+					<div class="space-y-1.5">
+						<div class="flex items-center justify-between">
+							<label for="telegram-token" class="text-xs font-medium text-slate-300">Default Telegram Bot Token</label>
+							<button
+								type="button"
+								onclick={testTelegramConnection}
+								disabled={testingTelegram}
+								class="text-[11px] font-semibold text-sky-400 hover:text-sky-300 disabled:opacity-50 transition flex items-center gap-1"
+							>
+								{#if testingTelegram}
+									<RefreshCw class="h-3 w-3 animate-spin" />
+									<span>Verifying...</span>
+								{:else}
+									<Check class="h-3 w-3" />
+									<span>Test Connection</span>
+								{/if}
+							</button>
+						</div>
+
+						<div class="relative">
+							<input
+								id="telegram-token"
+								type={showTelegramToken ? 'text' : 'password'}
+								placeholder="e.g. 123456789:ABCdefGHIjklMNOpqrsTUVwxyz"
+								bind:value={settings.telegramBotToken}
+								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 pr-10 font-mono text-xs text-slate-200 focus:border-sky-500 focus:outline-none transition"
+							/>
+							<button
+								type="button"
+								onclick={() => (showTelegramToken = !showTelegramToken)}
+								class="absolute right-3 top-3 text-slate-500 hover:text-white"
+								title="Toggle visibility"
+							>
+								{#if showTelegramToken}
+									<EyeOff class="h-4 w-4" />
+								{:else}
+									<Eye class="h-4 w-4" />
+								{/if}
+							</button>
+						</div>
+
+						{#if testTelegramResult}
+							<div
+								class="rounded-xl border p-3 text-xs flex items-center justify-between {testTelegramResult.success
+									? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300'
+									: 'border-rose-500/30 bg-rose-500/10 text-rose-300'}"
+							>
+								{#if testTelegramResult.success}
+									<div class="flex items-center gap-2">
+										<Check class="h-4 w-4 text-emerald-400" />
+										<span>Connected: <strong>@{testTelegramResult.bot?.username}</strong> ({testTelegramResult.bot?.firstName})</span>
+									</div>
+									<span class="font-mono text-[10px] text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded">
+										ID: {testTelegramResult.bot?.id}
+									</span>
+								{:else}
+									<div class="flex items-center gap-2">
+										<AlertTriangle class="h-4 w-4 text-rose-400" />
+										<span>{testTelegramResult.error}</span>
+									</div>
+								{/if}
+							</div>
+						{/if}
+					</div>
+
+					<div class="rounded-xl border border-slate-800/80 bg-slate-950/70 p-3 text-xs text-slate-400 space-y-1">
+						<span class="font-semibold text-slate-300">How to get a Bot Token:</span>
+						<p>
+							Open Telegram and chat with <a href="https://t.me/BotFather" target="_blank" rel="noreferrer" class="text-sky-400 hover:underline font-mono">@BotFather</a>. Send <code class="font-mono text-slate-300">/newbot</code> to obtain an HTTP API token. Once saved here, all Telegram nodes in your flows can use it automatically.
 						</p>
 					</div>
 				</div>

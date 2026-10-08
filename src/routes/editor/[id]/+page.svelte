@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.route ? `${data.route.title} — Nodely Nodeflow Builder` : 'Nodely Nodeflow Builder'}</title>
+	<title>{data.route ? `${data.route.title} — Nodeflow Builder` : 'Nodeflow Builder'}</title>
 </svelte:head>
 
 <SvelteFlowProvider>

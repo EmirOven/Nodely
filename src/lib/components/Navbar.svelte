@@ -52,6 +52,7 @@
 
 	const templates = [
 		{ id: 'user-auth', name: 'User Registration & Validation', desc: 'POST endpoint with condition checks & DB persist' },
+		{ id: 'telegram-bot', name: 'AI Telegram Bot Pipeline', desc: 'Telegram Webhook -> AI LLM Brain -> Telegram Reply' },
 		{ id: 'weather-api', name: 'Weather Data Aggregator', desc: 'GET endpoint with external fetch & data transform' },
 		{ id: 'note-crud', name: 'Note Storage & List', desc: 'CRUD operations on collections' },
 		{ id: 'empty', name: 'Simple Hello API (Starter)', desc: 'Clean single Trigger -> Response pipeline' },
@@ -116,7 +117,7 @@
 			<div class="flex items-center gap-2">
 				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodeflow'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.4.1
+					v0.5.0
 				</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">

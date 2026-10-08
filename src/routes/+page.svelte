@@ -305,7 +305,7 @@
 </script>
 
 <svelte:head>
-	<title>Nodely — Visual Nodeflow Builder & Engine</title>
+	<title>Nodeflow — Visual Nodeflow Builder & Engine</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none">
@@ -323,11 +323,11 @@
 
 			<div>
 				<div class="flex items-center gap-2">
-					<h1 class="text-lg font-bold tracking-tight text-white">Nodely</h1>
+					<h1 class="text-lg font-bold tracking-tight text-white">Nodeflow</h1>
 					<span
 						class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 					>
-						v0.4.1
+						v0.5.0
 					</span>
 				</div>
 				<p class="text-xs text-slate-400">Visual Nodeflow Builder & Engine</p>
@@ -593,7 +593,7 @@
 									{route.title}
 								</h2>
 								<p class="mt-1 text-xs text-slate-400 line-clamp-2 leading-relaxed">
-									{route.description || 'Custom visual Nodeflow created in Nodely.'}
+									{route.description || 'Custom visual Nodeflow created in Nodeflow.'}
 								</p>
 							</div>
 

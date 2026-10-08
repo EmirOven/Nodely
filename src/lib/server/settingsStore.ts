@@ -15,11 +15,14 @@ export interface NodelySettings {
 	openaiDefaultTemperature?: number;
 	googleClientId: string;
 	googleClientSecret: string;
+	telegramBotToken: string;
 	jwtSecret: string;
 	jwtExpiresIn: string;
 	corsOrigins: string;
 	updatedAt: string;
 }
+
+export type NodeflowSettings = NodelySettings;
 
 const SETTINGS_FILE = path.resolve(process.cwd(), '.nodely-settings.json');
 
@@ -37,7 +40,8 @@ const defaultSettings: NodelySettings = {
 	openaiDefaultTemperature: 0.7,
 	googleClientId: '',
 	googleClientSecret: '',
-	jwtSecret: 'nodely_jwt_secret_' + Math.random().toString(36).substring(2, 15),
+	telegramBotToken: '',
+	jwtSecret: 'nodeflow_jwt_secret_' + Math.random().toString(36).substring(2, 15),
 	jwtExpiresIn: '7d',
 	corsOrigins: '*',
 	updatedAt: new Date().toISOString()

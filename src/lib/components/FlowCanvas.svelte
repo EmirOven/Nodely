@@ -25,6 +25,8 @@
 	import UserManagementNode from './nodes/UserManagementNode.svelte';
 	import OpenAiNode from './nodes/OpenAiNode.svelte';
 	import AiNode from './nodes/AiNode.svelte';
+	import TelegramTriggerNode from './nodes/TelegramTriggerNode.svelte';
+	import TelegramSendMessageNode from './nodes/TelegramSendMessageNode.svelte';
 
 	import Navbar from './Navbar.svelte';
 	import Sidebar from './Sidebar.svelte';
@@ -35,7 +37,7 @@
 	import { templatesData, type TemplateDefinition } from '../templates';
 	import { executeFlow } from '../engine/executor';
 	import { generateSvelteKitCode, generateExpressCode } from '../engine/generator';
-	import type { NodelyNodeType, TestRequestPayload, ExecutionResult } from '../types';
+	import type { NodelyNodeType, TestRequestPayload, ExecutionResult, HttpMethod } from '../types';
 
 	const nodeTypes: any = {
 		httpTrigger: TriggerNode,
@@ -50,7 +52,9 @@
 		googleAuthNode: GoogleAuthNode,
 		userManagementNode: UserManagementNode,
 		aiNode: AiNode,
-		openAiNode: AiNode
+		openAiNode: AiNode,
+		telegramTrigger: TelegramTriggerNode,
+		telegramSendMessage: TelegramSendMessageNode
 	};
 
 	interface Props {
@@ -242,6 +246,40 @@
 	function duplicateNode(id: string) {
 		const target = nodes.find((n) => n.id === id);
 		if (!target) return;
+
+		if (target.type === 'httpTrigger') {
+			const existingTriggers = nodes.filter((n) => n.type === 'httpTrigger');
+			const usedMethods = new Set(
+				existingTriggers.map((n) => ((n.data as any)?.method || 'GET') as HttpMethod)
+			);
+			const allMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+			const availableMethod = allMethods.find((m) => !usedMethods.has(m));
+			if (!availableMethod) {
+				alert(
+					'Every Nodeflow project is a single endpoint with at most one HTTP trigger per method (GET, POST, PUT, PATCH, DELETE). All methods are already in use.'
+				);
+				nodeContextMenu = null;
+				return;
+			}
+			const newNode: Node = {
+				...JSON.parse(JSON.stringify(target)),
+				id: `${target.type}_${Date.now()}`,
+				position: {
+					x: target.position.x + 40,
+					y: target.position.y + 40
+				},
+				data: {
+					...JSON.parse(JSON.stringify(target.data || {})),
+					method: availableMethod,
+					path: currentRoutePath,
+					routePath: currentRoutePath
+				}
+			};
+			nodes = [...nodes, newNode];
+			nodeContextMenu = null;
+			return;
+		}
+
 		const newNode: Node = {
 			...JSON.parse(JSON.stringify(target)),
 			id: `${target.type}_${Date.now()}`,
@@ -259,13 +297,21 @@
 		let data: Record<string, any> = { title: type };
 
 		switch (type) {
-			case 'httpTrigger':
+			case 'httpTrigger': {
+				const existingTriggers = nodes.filter((n) => n.type === 'httpTrigger');
+				const usedMethods = new Set(
+					existingTriggers.map((n) => ((n.data as any)?.method || 'GET') as HttpMethod)
+				);
+				const allMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+				const assignedMethod = allMethods.find((m) => !usedMethods.has(m)) || 'GET';
 				data = {
 					title: 'API Endpoint',
-					method: 'POST',
-					path: '/api/v1/action'
+					method: assignedMethod,
+					path: currentRoutePath || '/api/endpoint',
+					routePath: currentRoutePath || '/api/endpoint'
 				};
 				break;
+			}
 			case 'codeBlock':
 				data = {
 					title: 'Custom Logic',
@@ -306,7 +352,7 @@
 					title: 'Auth Gate',
 					authType: 'apiKey',
 					headerName: 'x-api-key',
-					expectedValue: 'secret_nodely_key'
+					expectedValue: 'secret_nodeflow_key'
 				};
 				break;
 			case 'validatorNode':
@@ -352,6 +398,22 @@
 					responseFormat: 'text'
 				};
 				break;
+			case 'telegramTrigger':
+				data = {
+					title: 'Telegram Bot Trigger',
+					filterCommand: ''
+				};
+				break;
+			case 'telegramSendMessage':
+				data = {
+					title: 'Telegram Send Message',
+					action: 'sendMessage',
+					chatId: '{{telegram.chatId}}',
+					text: "Hello {{telegram.sender?.firstName || 'there'}}! Your message has been processed.",
+					parseMode: 'HTML',
+					botToken: ''
+				};
+				break;
 		}
 
 		return {
@@ -363,6 +425,21 @@
 	}
 
 	function handleAddNode(type: NodelyNodeType) {
+		if (type === 'httpTrigger') {
+			const existingTriggers = nodes.filter((n) => n.type === 'httpTrigger');
+			const usedMethods = new Set(
+				existingTriggers.map((n) => ((n.data as any)?.method || 'GET') as HttpMethod)
+			);
+			const allMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+			const available = allMethods.find((m) => !usedMethods.has(m));
+			if (!available) {
+				alert(
+					'Every Nodeflow project is a single endpoint with at most one HTTP trigger per method (GET, POST, PUT, PATCH, DELETE). All methods are already in use.'
+				);
+				return;
+			}
+		}
+
 		const offset = nodes.length * 30;
 		const position = { x: 300 + (offset % 200), y: 150 + (offset % 300) };
 		const newNode = createNodeInstance(type, position);
@@ -380,6 +457,21 @@
 		event.preventDefault();
 		const type = event.dataTransfer?.getData('application/nodely-node') as NodelyNodeType;
 		if (!type) return;
+
+		if (type === 'httpTrigger') {
+			const existingTriggers = nodes.filter((n) => n.type === 'httpTrigger');
+			const usedMethods = new Set(
+				existingTriggers.map((n) => ((n.data as any)?.method || 'GET') as HttpMethod)
+			);
+			const allMethods: HttpMethod[] = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'];
+			const available = allMethods.find((m) => !usedMethods.has(m));
+			if (!available) {
+				alert(
+					'Every Nodeflow project is a single endpoint with at most one HTTP trigger per method (GET, POST, PUT, PATCH, DELETE). All methods are already in use.'
+				);
+				return;
+			}
+		}
 
 		const position = screenToFlowPosition({
 			x: event.clientX,

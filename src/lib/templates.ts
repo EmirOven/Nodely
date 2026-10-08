@@ -319,7 +319,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 				data: {
 					title: '200 OK',
 					statusCode: 200,
-					bodyExpression: `{\n  message: 'Hello from Nodely API!',\n  status: 'active',\n  timestamp: new Date().toISOString()\n}`
+					bodyExpression: `{\n  message: 'Hello from Nodeflow API!',\n  status: 'active',\n  timestamp: new Date().toISOString()\n}`
 				}
 			}
 		],
@@ -338,6 +338,84 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			method: 'GET',
 			path: '/api/v1/hello',
 			body: '{}'
+		}
+	},
+	'telegram-bot': {
+		nodes: [
+			{
+				id: 'tg-trigger-1',
+				type: 'telegramTrigger',
+				position: { x: 300, y: 80 },
+				data: {
+					title: 'Telegram Bot Webhook',
+					filterCommand: ''
+				}
+			},
+			{
+				id: 'ai-bot-1',
+				type: 'aiNode',
+				position: { x: 300, y: 380 },
+				data: {
+					title: 'AI Bot Brain',
+					provider: 'openai',
+					model: 'gpt-4o-mini',
+					systemPrompt: 'You are a helpful and concise Telegram assistant. Keep replies brief, friendly, and formatted nicely.',
+					userPrompt: 'User message: {{telegram.text || payload.text}}',
+					temperature: 0.7,
+					maxTokens: 500,
+					responseFormat: 'text'
+				}
+			},
+			{
+				id: 'tg-send-1',
+				type: 'telegramSendMessage',
+				position: { x: 300, y: 760 },
+				data: {
+					title: 'Send Telegram Reply',
+					action: 'sendMessage',
+					chatId: '{{telegram.chatId}}',
+					text: '{{aiResponse.text}}',
+					parseMode: 'HTML'
+				}
+			}
+		],
+		edges: [
+			{
+				id: 'e-tg-1',
+				source: 'tg-trigger-1',
+				target: 'ai-bot-1',
+				sourceHandle: 'output',
+				targetHandle: 'input',
+				animated: true,
+				style: 'stroke: #0ea5e9; stroke-width: 2px;'
+			},
+			{
+				id: 'e-tg-2',
+				source: 'ai-bot-1',
+				target: 'tg-send-1',
+				sourceHandle: 'success',
+				targetHandle: 'input',
+				animated: true,
+				style: 'stroke: #10b981; stroke-width: 2px;'
+			}
+		],
+		defaultRequest: {
+			method: 'POST',
+			path: '/api/v1/telegram/webhook',
+			body: JSON.stringify(
+				{
+					update_id: 10001,
+					message: {
+						message_id: 42,
+						from: { id: 987654321, first_name: 'Alex', username: 'alex_dev' },
+						chat: { id: 987654321, first_name: 'Alex', type: 'private' },
+						date: 1712000000,
+						text: 'How do I create a Telegram bot with Nodeflow?'
+					}
+				},
+				null,
+				2
+			)
 		}
 	},
 	'blank': {

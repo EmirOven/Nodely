@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0] - 2026-10-08
+
+### Added
+- **Complete Rebrand to Nodeflow**:
+  - Rebranded the platform name from Nodely to **Nodeflow** across all application headers, navigation bars, page titles, settings, and landing site.
+- **Telegram Bot API Platform Integration**:
+  - **Telegram Bot Webhook Trigger (`telegramTrigger`)**:
+    - Captures inbound Telegram updates from bot webhooks.
+    - Parses chat ID, message text, commands (`/start`, `/help`, etc.), sender info, and callback data into execution state (`state.telegram`).
+    - Optional command filter with quick selector pills.
+  - **Telegram Send Message Node (`telegramSendMessage`)**:
+    - Sends outgoing messages, photos with captions, or callback query answers via Telegram Bot API (`https://api.telegram.org/bot<token>/...`).
+    - Supports dynamic templating (`{{aiResponse.text}}`, `{{telegram.sender.firstName}}`), parse modes (`HTML`, `MarkdownV2`, `None`), and live execution or simulated test dispatch.
+  - **Telegram Bot Settings & Verification**:
+    - Dedicated Telegram Bot API configuration in `/settings`.
+    - Live token verification test endpoint (`/api/settings/test-telegram`) with `@BotFather` setup instructions.
+  - **Pre-Built AI Telegram Bot Blueprint (`telegram-bot`)**:
+    - 1-click template combining Telegram Webhook -> AI Completion -> Telegram Send Message.
+- **Single-Endpoint HTTP Trigger Guardrails**:
+  - **1 Trigger per Method Constraint**: Strictly enforces that a Nodeflow project can have at most one HTTP trigger per method (`GET`, `POST`, `PUT`, `PATCH`, `DELETE`).
+  - **Locked Endpoint URL**: Removed manual route editing on HTTP trigger nodes; endpoints are locked directly to the parent Nodeflow endpoint route.
+  - **Educational Custom Method Selector**: Replaced native HTML select with a custom dropdown featuring deep architectural guidance on what each HTTP method does, idempotency, best practices, and disabling methods already in use in the flow.
+- **Comprehensive Multi-Format Favicons**:
+  - Generated binary `favicon.ico` and `favicon.png` icons alongside `favicon.svg` with cache-busting headers for both the engine and landing website.
+
+---
+
 ## [0.4.1] - 2026-10-08
 
 ### Added
