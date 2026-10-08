@@ -1,1 +1,15 @@
-// place files you want to import through the `#lib` alias in this folder.
+// Re-export node architecture and extension SDK for custom node authors
+export {
+	BaseNode,
+	type OutputHandleConfig,
+	type AccentColor
+} from './components/nodes/index';
+
+export {
+	defineNodeExtension,
+	registerNodeExtension,
+	getNodeExtension,
+	getAllNodeExtensions,
+	type NodeExtensionDefinition,
+	type NodeCategory
+} from './extensions/index';

@@ -1,21 +1,12 @@
 <script lang="ts">
-	import { Handle, Position, useSvelteFlow, type NodeProps } from '@xyflow/svelte';
-	import {
-		Send,
-		Trash2,
-		GripVertical,
-		KeyRound,
-		MessageSquare,
-		Image as ImageIcon,
-		CheckCircle2,
-		AlertTriangle,
-		Code
-	} from '@lucide/svelte';
+	import { useSvelteFlow, type NodeProps } from '@xyflow/svelte';
+	import { KeyRound } from '@lucide/svelte';
 	import TelegramIcon from '../icons/TelegramIcon.svelte';
+	import BaseNode from './BaseNode.svelte';
 	import type { TelegramSendMessageData } from '../../types';
 
 	let { id, data, selected }: NodeProps = $props();
-	const { updateNodeData, deleteElements } = useSvelteFlow();
+	const { updateNodeData } = useSvelteFlow();
 
 	const telegramData = $derived(data as unknown as TelegramSendMessageData);
 
@@ -25,52 +16,22 @@
 	const parseModes: Array<'HTML' | 'MarkdownV2' | 'None'> = ['HTML', 'MarkdownV2', 'None'];
 </script>
 
-<div
-	class="w-88 rounded-xl border bg-slate-900/95 shadow-xl backdrop-blur-md transition-all duration-200 {selected
-		? 'border-sky-500 ring-2 ring-sky-500/30 shadow-sky-500/10'
-		: 'border-slate-800 hover:border-slate-700'}"
+<BaseNode
+	{id}
+	{selected}
+	title={telegramData.title || 'Telegram Send Message'}
+	icon={TelegramIcon}
+	badge="Bot API"
+	badgeClass="bg-sky-500/10 text-sky-400 border border-sky-500/20"
+	accentColor="cyan"
+	width="w-88"
+	isExecuting={telegramData.isExecuting}
+	outputs={[
+		{ id: 'success', label: 'SUCCESS', color: 'emerald' },
+		{ id: 'error', label: 'ERROR', color: 'rose' }
+	]}
 >
-	<!-- Top Target Handle -->
-	<div class="relative py-1">
-		<Handle
-			type="target"
-			position={Position.Top}
-			id="input"
-			class="!h-3.5 !w-3.5 !border-2 !border-slate-900 !bg-sky-500 hover:!bg-sky-400 transition"
-		/>
-	</div>
-
-	<!-- Header / Drag Handle -->
-	<div
-		class="drag-handle flex items-center justify-between border-b border-slate-800/80 bg-slate-800/50 px-3 py-2.5 rounded-t-xl"
-	>
-		<div class="flex items-center gap-2">
-			<GripVertical class="h-4 w-4 text-slate-500 cursor-grab active:cursor-grabbing" />
-			<div class="flex h-6 w-6 items-center justify-center rounded-md bg-sky-500/20 text-sky-400">
-				<TelegramIcon class="h-4 w-4" />
-			</div>
-			<span class="text-xs font-semibold tracking-wide text-slate-200 uppercase">
-				{telegramData.title || 'Telegram Send Message'}
-			</span>
-		</div>
-
-		<div class="flex items-center gap-1.5">
-			<span class="rounded bg-sky-500/10 px-1.5 py-0.5 text-[10px] font-medium text-sky-400 border border-sky-500/20">
-				Bot API
-			</span>
-			<button
-				type="button"
-				class="rounded p-1 text-slate-400 hover:bg-slate-700/60 hover:text-rose-400 transition"
-				onclick={() => deleteElements({ nodes: [{ id }] })}
-				title="Delete Node"
-			>
-				<Trash2 class="h-3.5 w-3.5" />
-			</button>
-		</div>
-	</div>
-
-	<!-- Content -->
-	<div class="p-3 space-y-3">
+	<div class="space-y-3">
 		<!-- Action Selector -->
 		<div class="space-y-1">
 			<label class="text-[11px] font-medium text-slate-400" for="tg-action-{id}">Telegram Action</label>
@@ -170,27 +131,4 @@
 			/>
 		</div>
 	</div>
-
-	<!-- Output Handles -->
-	<div class="flex items-center justify-between border-t border-slate-800/80 bg-slate-950/40 px-3 py-2 text-[10px] font-mono">
-		<div class="relative flex items-center gap-1.5 text-emerald-400">
-			<Handle
-				type="source"
-				position={Position.Bottom}
-				id="success"
-				class="!left-4 !h-3 !w-3 !border-2 !border-slate-900 !bg-emerald-500 hover:!bg-emerald-400 transition"
-			/>
-			<span class="pl-3">SUCCESS</span>
-		</div>
-
-		<div class="relative flex items-center gap-1.5 text-rose-400">
-			<span>ERROR</span>
-			<Handle
-				type="source"
-				position={Position.Bottom}
-				id="error"
-				class="!left-auto !right-4 !h-3 !w-3 !border-2 !border-slate-900 !bg-rose-500 hover:!bg-rose-400 transition"
-			/>
-		</div>
-	</div>
-</div>
+</BaseNode>

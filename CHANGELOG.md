@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.2] - 2026-10-08
+
+### Added
+- **Generalized `BaseNode.svelte` Architecture**:
+  - Engineered a first-class, reusable base Svelte 5 component (`BaseNode.svelte`) serving as the universal foundational chrome and shell for all Nodeflow nodes.
+  - Built-in drag header with Lucide grip icons, interactive node icon badges, editable or locked node titles, category badges, execution status indicators, and delete actions.
+  - Standardized single/multi input and output handle management (`hasInputHandle`, `hasOutputHandle`, `outputs: OutputHandleConfig[]`) with automated handle spacing, custom color styling, and branch status tags.
+  - Integrated 10 preset accent color palettes (`blue`, `emerald`, `indigo`, `purple`, `amber`, `rose`, `teal`, `cyan`, `yellow`, `slate`) with matched border glows, ring highlights, and handle styles.
+  - Automatic focus pulling and stacking elevation (`zIndex: 1000`) on pointer down, focus in, or dropdown activation.
+  - Svelte 5 rune and snippet support (`children`, `headerActions`, `headerBadge`, `customHandles`, `footer`) for clean, modular node customization.
+- **Node Extension SDK & Registry (`src/lib/extensions/index.ts`)**:
+  - Implemented `defineNodeExtension()` and `registerNodeExtension()` API for third-party developers and plugin authors to define and distribute custom nodes.
+  - Added `NodeExtensionDefinition` interface covering node type, title, category, icon, accent color, Svelte component, default state factory, simulator executor, and code generators.
+  - Exported `BaseNode` and Extension SDK from `$lib` (`src/lib/index.ts`) for clean public consumption.
+
+### Changed
+- **Standardized All Built-in Nodes to `BaseNode`**:
+  - Migrated 100% of Nodeflow's built-in nodes to `BaseNode.svelte`:
+    - `TriggerNode` (HTTP Trigger)
+    - `CodeBlockNode` (JavaScript / TypeScript execution)
+    - `ConditionalNode` (Branching / comparison)
+    - `ValidatorNode` (Schema validation)
+    - `AuthNode` (Header token / API key authentication)
+    - `GoogleAuthNode` (OAuth verification)
+    - `UserManagementNode` (Sign up, login, user CRUD)
+    - `AiNode` & `OpenAiNode` (Multi-provider AI completion)
+    - `FetchNode` (External HTTP requests)
+    - `DataStoreNode` (Database CRUD & KV persistence)
+    - `DelayNode` (Execution timer delay)
+    - `ResponseNode` (HTTP terminal response)
+    - `TelegramTriggerNode` (Telegram bot webhook)
+    - `TelegramSendMessageNode` (Telegram bot message dispatcher)
+  - Dramatically reduced node boilerplate across the codebase while ensuring 100% consistent styling and interaction behavior.
+
+---
+
 ## [0.5.1] - 2026-10-08
 
 ### Added
