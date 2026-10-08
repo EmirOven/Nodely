@@ -237,10 +237,10 @@
 			<a
 				href="/"
 				class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition group"
-				title="Back to All Routes"
+				title="Back to All Nodeflows"
 			>
 				<ArrowLeft class="h-3.5 w-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
-				<span>Routes</span>
+				<span>Nodeflows</span>
 			</a>
 
 			<div class="flex items-center gap-3">
@@ -255,7 +255,7 @@
 						<span
 							class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 						>
-							v0.3.0
+							v0.4.0
 						</span>
 					</div>
 					<p class="text-xs text-slate-400">Nodeflow Auth Database & User Directory</p>
@@ -266,7 +266,7 @@
 		<!-- Center: Navigation Tabs -->
 		<div class="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
 			<a href="/" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
-				API Routes
+				Nodeflows
 			</a>
 			<a href="/users" class="px-3 py-1 text-xs font-semibold text-white bg-slate-800 rounded-lg shadow-sm">
 				Project Users
@@ -317,7 +317,7 @@
 					<Users class="h-4 w-4 text-indigo-400" />
 				</div>
 				<div class="mt-2 text-2xl font-bold text-white">{stats.total}</div>
-				<p class="mt-1 text-[11px] text-slate-500">Registered across all API flows</p>
+				<p class="mt-1 text-[11px] text-slate-500">Registered across all Nodeflows</p>
 			</div>
 
 			<div class="rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-4 backdrop-blur">

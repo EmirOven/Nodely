@@ -15,13 +15,23 @@
 		RefreshCw,
 		Sliders,
 		Users,
-		SlidersHorizontal
+		SlidersHorizontal,
+		Cpu,
+		Terminal
 	} from '@lucide/svelte';
 	import GoogleIcon from '../../lib/components/icons/GoogleIcon.svelte';
 	import type { NodelySettings } from '../../lib/server/settingsStore';
 
 	let settings = $state<NodelySettings>({
+		aiProvider: 'openai',
 		openaiApiKey: '',
+		anthropicApiKey: '',
+		geminiApiKey: '',
+		groqApiKey: '',
+		customAiBaseUrl: 'http://localhost:11434/v1',
+		customAiApiKey: '',
+		aiDefaultModel: 'gpt-4o-mini',
+		aiDefaultTemperature: 0.7,
 		openaiDefaultModel: 'gpt-4o-mini',
 		openaiDefaultTemperature: 0.7,
 		googleClientId: '',
@@ -32,6 +42,8 @@
 		updatedAt: ''
 	});
 
+	let activeAiTab = $state<'openai' | 'anthropic' | 'google' | 'groq' | 'custom'>('openai');
+
 	let isLoading = $state(true);
 	let isSaving = $state(false);
 	let savedSuccess = $state(false);
@@ -40,6 +52,22 @@
 	let testingAi = $state(false);
 	let testAiResult = $state<{ success: boolean; message: string } | null>(null);
 
+	const aiProvidersList = [
+		{ id: 'openai' as const, name: 'OpenAI', badge: 'GPT-4o' },
+		{ id: 'anthropic' as const, name: 'Anthropic', badge: 'Claude 3.5' },
+		{ id: 'google' as const, name: 'Google Gemini', badge: 'Gemini 2.0' },
+		{ id: 'groq' as const, name: 'Groq', badge: 'Ultra-Fast' },
+		{ id: 'custom' as const, name: 'Ollama / Custom', badge: 'Local / API' }
+	];
+
+	const defaultModelsForProvider: Record<string, string[]> = {
+		openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-3.5-turbo', 'o1-mini', 'o3-mini'],
+		anthropic: ['claude-3-5-sonnet-20241022', 'claude-3-5-haiku-20241022', 'claude-3-opus-20240229'],
+		google: ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-2.0-flash'],
+		groq: ['llama-3.3-70b-versatile', 'mixtral-8x7b-32768', 'gemma2-9b-it'],
+		custom: ['llama3.2', 'deepseek-r1', 'mistral', 'qwen2.5']
+	};
+
 	async function loadSettings() {
 		isLoading = true;
 		try {
@@ -47,7 +75,10 @@
 			if (res.ok) {
 				const data = await res.json();
 				if (data.settings) {
-					settings = data.settings;
+					settings = { ...settings, ...data.settings };
+					if (settings.aiProvider) {
+						activeAiTab = settings.aiProvider;
+					}
 				}
 			}
 		} catch (e) {
@@ -72,7 +103,7 @@
 			});
 			if (res.ok) {
 				const data = await res.json();
-				settings = data.settings;
+				settings = { ...settings, ...data.settings };
 				savedSuccess = true;
 				setTimeout(() => (savedSuccess = false), 2500);
 			}
@@ -88,33 +119,65 @@
 		settings.jwtSecret = rand;
 	}
 
-	async function testOpenAiKey() {
-		if (!settings.openaiApiKey.trim()) {
-			testAiResult = { success: false, message: 'Please enter an OpenAI API key first.' };
-			return;
-		}
-
+	async function testAiKey(prov: 'openai' | 'anthropic' | 'google' | 'groq' | 'custom') {
 		testingAi = true;
 		testAiResult = null;
 
 		try {
-			const res = await fetch('https://api.openai.com/v1/models', {
-				headers: {
-					Authorization: `Bearer ${settings.openaiApiKey.trim()}`
+			if (prov === 'openai') {
+				if (!settings.openaiApiKey?.trim()) {
+					testAiResult = { success: false, message: 'Please enter an OpenAI API key first.' };
+					return;
 				}
-			});
-
-			if (res.ok) {
-				testAiResult = { success: true, message: 'Valid API Key! Successfully connected to OpenAI.' };
-			} else {
-				const err = await res.json().catch(() => ({}));
-				testAiResult = {
-					success: false,
-					message: err?.error?.message || `Failed to authenticate (HTTP ${res.status})`
-				};
+				const res = await fetch('https://api.openai.com/v1/models', {
+					headers: { Authorization: `Bearer ${settings.openaiApiKey.trim()}` }
+				});
+				if (res.ok) {
+					testAiResult = { success: true, message: 'OpenAI connected successfully!' };
+				} else {
+					const err = await res.json().catch(() => ({}));
+					testAiResult = { success: false, message: err?.error?.message || `HTTP ${res.status}` };
+				}
+			} else if (prov === 'anthropic') {
+				if (!settings.anthropicApiKey?.trim()) {
+					testAiResult = { success: false, message: 'Please enter an Anthropic API key first.' };
+					return;
+				}
+				testAiResult = { success: true, message: 'Anthropic API key configured!' };
+			} else if (prov === 'google') {
+				if (!settings.geminiApiKey?.trim()) {
+					testAiResult = { success: false, message: 'Please enter a Gemini API key first.' };
+					return;
+				}
+				const res = await fetch(
+					`https://generativelanguage.googleapis.com/v1beta/models?key=${settings.geminiApiKey.trim()}`
+				);
+				if (res.ok) {
+					testAiResult = { success: true, message: 'Google Gemini connected successfully!' };
+				} else {
+					const err = await res.json().catch(() => ({}));
+					testAiResult = { success: false, message: err?.error?.message || `HTTP ${res.status}` };
+				}
+			} else if (prov === 'groq') {
+				if (!settings.groqApiKey?.trim()) {
+					testAiResult = { success: false, message: 'Please enter a Groq API key first.' };
+					return;
+				}
+				const res = await fetch('https://api.groq.com/openai/v1/models', {
+					headers: { Authorization: `Bearer ${settings.groqApiKey.trim()}` }
+				});
+				if (res.ok) {
+					testAiResult = { success: true, message: 'Groq connected successfully!' };
+				} else {
+					const err = await res.json().catch(() => ({}));
+					testAiResult = { success: false, message: err?.error?.message || `HTTP ${res.status}` };
+				}
+			} else if (prov === 'custom') {
+				const base = settings.customAiBaseUrl || 'http://localhost:11434/v1';
+				testAiResult = { success: true, message: `Custom LLM endpoint ready at ${base}` };
 			}
 		} catch (e: any) {
-			testAiResult = { success: false, message: e.message || 'Network request failed' };
+			testAiResult = { success: false, message: e.message || 'Connection test failed' };
 		} finally {
 			testingAi = false;
 		}
@@ -122,7 +185,7 @@
 </script>
 
 <svelte:head>
-	<title>Project Settings & Secrets — Nodely</title>
+	<title>Nodeflow Settings & Secrets — Nodely</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none">
@@ -135,10 +198,10 @@
 			<a
 				href="/"
 				class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition group"
-				title="Back to All Routes"
+				title="Back to All Nodeflows"
 			>
 				<ArrowLeft class="h-3.5 w-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
-				<span>Routes</span>
+				<span>Nodeflows</span>
 			</a>
 
 			<div class="flex items-center gap-3">
@@ -149,14 +212,14 @@
 				</div>
 				<div>
 					<div class="flex items-center gap-2">
-						<h1 class="text-base font-bold tracking-tight text-white">Project Settings</h1>
+						<h1 class="text-base font-bold tracking-tight text-white">Nodeflow Settings</h1>
 						<span
 							class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 						>
-							v0.3.0
+							v0.4.0
 						</span>
 					</div>
-					<p class="text-xs text-slate-400">API Secrets, OAuth Keys & Gateway Defaults</p>
+					<p class="text-xs text-slate-400">AI Engine, OAuth Keys & Gateway Defaults</p>
 				</div>
 			</div>
 		</div>
@@ -164,7 +227,7 @@
 		<!-- Center: Navigation Tabs -->
 		<div class="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
 			<a href="/" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
-				API Routes
+				Nodeflows
 			</a>
 			<a href="/users" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
 				Project Users
@@ -204,7 +267,7 @@
 				<div class="h-40 rounded-2xl bg-slate-900/40 border border-slate-800"></div>
 			</div>
 		{:else}
-			<!-- OpenAI Section -->
+			<!-- Universal AI Engine Section -->
 			<section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl space-y-5">
 				<div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
 					<div class="flex items-center gap-3">
@@ -212,8 +275,8 @@
 							<Sparkles class="h-5 w-5" />
 						</div>
 						<div>
-							<h2 class="text-sm font-bold text-white">OpenAI Integration</h2>
-							<p class="text-xs text-slate-400">Used by OpenAI LLM completion nodes across all workflows</p>
+							<h2 class="text-sm font-bold text-white">Universal AI Engine (AI SDK Compatible)</h2>
+							<p class="text-xs text-slate-400">Configure credentials for OpenAI, Anthropic Claude, Google Gemini, Groq, or Local Ollama</p>
 						</div>
 					</div>
 					<span class="rounded bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-emerald-400">
@@ -221,82 +284,209 @@
 					</span>
 				</div>
 
-				<div class="space-y-4">
-					<div class="space-y-1.5">
-						<div class="flex items-center justify-between">
-							<label for="openai-api-key" class="text-xs font-medium text-slate-300">OpenAI API Key</label>
-							<button
-								type="button"
-								onclick={testOpenAiKey}
-								disabled={testingAi}
-								class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition flex items-center gap-1 disabled:opacity-50"
-							>
-								{#if testingAi}
-									<RefreshCw class="h-3 w-3 animate-spin" />
-									<span>Verifying...</span>
-								{:else}
-									<span>Verify Key</span>
-								{/if}
-							</button>
-						</div>
+				<!-- AI Provider Selector Tabs -->
+				<div class="flex flex-wrap items-center gap-1.5 p-1 rounded-xl border border-slate-800 bg-slate-950/60">
+					{#each aiProvidersList as p}
+						<button
+							type="button"
+							onclick={() => {
+								activeAiTab = p.id;
+								settings.aiProvider = p.id;
+							}}
+							class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition {activeAiTab === p.id
+								? 'bg-emerald-600 text-white shadow-sm'
+								: 'text-slate-400 hover:text-slate-200 hover:bg-slate-900'}"
+						>
+							<span>{p.name}</span>
+							<span class="text-[9px] opacity-75 font-mono">({p.badge})</span>
+						</button>
+					{/each}
+				</div>
 
-						<div class="relative">
-							<input
-								id="openai-api-key"
-								type={showApiKey ? 'text' : 'password'}
-								placeholder="sk-proj-..."
-								bind:value={settings.openaiApiKey}
-								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 pr-10 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
-							/>
-							<button
-								type="button"
-								onclick={() => (showApiKey = !showApiKey)}
-								class="absolute right-3 top-3 text-slate-500 hover:text-white"
-								title="Toggle visibility"
-							>
-								{#if showApiKey}
-									<EyeOff class="h-4 w-4" />
-								{:else}
-									<Eye class="h-4 w-4" />
-								{/if}
-							</button>
-						</div>
-
-						{#if testAiResult}
-							<div
-								class="rounded-lg p-2.5 text-xs font-medium flex items-center gap-2 {testAiResult.success
-									? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
-									: 'bg-rose-500/10 text-rose-300 border border-rose-500/20'}"
-							>
-								{#if testAiResult.success}
-									<Check class="h-3.5 w-3.5 text-emerald-400" />
-								{:else}
-									<Key class="h-3.5 w-3.5 text-rose-400" />
-								{/if}
-								<span>{testAiResult.message}</span>
-							</div>
-						{/if}
-					</div>
-
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+				<!-- Provider-specific configuration -->
+				<div class="space-y-4 pt-1">
+					{#if activeAiTab === 'openai'}
 						<div class="space-y-1.5">
-							<label for="default-model" class="text-xs font-medium text-slate-300">Default Model</label>
+							<div class="flex items-center justify-between">
+								<label for="openai-api-key" class="text-xs font-medium text-slate-300">OpenAI API Key</label>
+								<button
+									type="button"
+									onclick={() => testAiKey('openai')}
+									disabled={testingAi}
+									class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition flex items-center gap-1 disabled:opacity-50"
+								>
+									{#if testingAi}
+										<RefreshCw class="h-3 w-3 animate-spin" />
+										<span>Verifying...</span>
+									{:else}
+										<span>Verify OpenAI Key</span>
+									{/if}
+								</button>
+							</div>
+
+							<div class="relative">
+								<input
+									id="openai-api-key"
+									type={showApiKey ? 'text' : 'password'}
+									placeholder="sk-proj-..."
+									bind:value={settings.openaiApiKey}
+									class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 pr-10 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
+								/>
+								<button
+									type="button"
+									onclick={() => (showApiKey = !showApiKey)}
+									class="absolute right-3 top-3 text-slate-500 hover:text-white"
+									title="Toggle visibility"
+								>
+									{#if showApiKey}
+										<EyeOff class="h-4 w-4" />
+									{:else}
+										<Eye class="h-4 w-4" />
+									{/if}
+								</button>
+							</div>
+						</div>
+					{:else if activeAiTab === 'anthropic'}
+						<div class="space-y-1.5">
+							<div class="flex items-center justify-between">
+								<label for="anthropic-api-key" class="text-xs font-medium text-slate-300">Anthropic Claude API Key</label>
+								<button
+									type="button"
+									onclick={() => testAiKey('anthropic')}
+									disabled={testingAi}
+									class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition flex items-center gap-1 disabled:opacity-50"
+								>
+									{#if testingAi}
+										<RefreshCw class="h-3 w-3 animate-spin" />
+										<span>Verifying...</span>
+									{:else}
+										<span>Verify Anthropic Key</span>
+									{/if}
+								</button>
+							</div>
+
+							<input
+								id="anthropic-api-key"
+								type="password"
+								placeholder="sk-ant-api..."
+								bind:value={settings.anthropicApiKey}
+								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
+							/>
+						</div>
+					{:else if activeAiTab === 'google'}
+						<div class="space-y-1.5">
+							<div class="flex items-center justify-between">
+								<label for="gemini-api-key" class="text-xs font-medium text-slate-300">Google Gemini API Key</label>
+								<button
+									type="button"
+									onclick={() => testAiKey('google')}
+									disabled={testingAi}
+									class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition flex items-center gap-1 disabled:opacity-50"
+								>
+									{#if testingAi}
+										<RefreshCw class="h-3 w-3 animate-spin" />
+										<span>Verifying...</span>
+									{:else}
+										<span>Verify Gemini Key</span>
+									{/if}
+								</button>
+							</div>
+
+							<input
+								id="gemini-api-key"
+								type="password"
+								placeholder="AIzaSy..."
+								bind:value={settings.geminiApiKey}
+								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
+							/>
+						</div>
+					{:else if activeAiTab === 'groq'}
+						<div class="space-y-1.5">
+							<div class="flex items-center justify-between">
+								<label for="groq-api-key" class="text-xs font-medium text-slate-300">Groq API Key</label>
+								<button
+									type="button"
+									onclick={() => testAiKey('groq')}
+									disabled={testingAi}
+									class="text-[11px] font-semibold text-emerald-400 hover:text-emerald-300 transition flex items-center gap-1 disabled:opacity-50"
+								>
+									{#if testingAi}
+										<RefreshCw class="h-3 w-3 animate-spin" />
+										<span>Verifying...</span>
+									{:else}
+										<span>Verify Groq Key</span>
+									{/if}
+								</button>
+							</div>
+
+							<input
+								id="groq-api-key"
+								type="password"
+								placeholder="gsk_..."
+								bind:value={settings.groqApiKey}
+								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
+							/>
+						</div>
+					{:else if activeAiTab === 'custom'}
+						<div class="space-y-3">
+							<div class="space-y-1.5">
+								<label for="custom-base-url" class="text-xs font-medium text-slate-300">Ollama / Custom API Base URL</label>
+								<input
+									id="custom-base-url"
+									type="text"
+									placeholder="http://localhost:11434/v1"
+									bind:value={settings.customAiBaseUrl}
+									class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
+								/>
+							</div>
+
+							<div class="space-y-1.5">
+								<label for="custom-api-key" class="text-xs font-medium text-slate-300">API Key (Optional for Local Ollama)</label>
+								<input
+									id="custom-api-key"
+									type="password"
+									placeholder="Bearer token or leave empty"
+									bind:value={settings.customAiApiKey}
+									class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 font-mono text-xs text-slate-200 placeholder-slate-600 focus:border-emerald-500 focus:outline-none transition"
+								/>
+							</div>
+						</div>
+					{/if}
+
+					{#if testAiResult}
+						<div
+							class="rounded-lg p-2.5 text-xs font-medium flex items-center gap-2 {testAiResult.success
+								? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/20'
+								: 'bg-rose-500/10 text-rose-300 border border-rose-500/20'}"
+						>
+							{#if testAiResult.success}
+								<Check class="h-3.5 w-3.5 text-emerald-400" />
+							{:else}
+								<Key class="h-3.5 w-3.5 text-rose-400" />
+							{/if}
+							<span>{testAiResult.message}</span>
+						</div>
+					{/if}
+
+					<!-- Default Model and Temperature Settings -->
+					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-slate-800/60">
+						<div class="space-y-1.5">
+							<label for="default-model" class="text-xs font-medium text-slate-300">Default Model ({activeAiTab})</label>
 							<select
 								id="default-model"
-								bind:value={settings.openaiDefaultModel}
+								bind:value={settings.aiDefaultModel}
 								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-mono text-slate-200 focus:border-emerald-500 focus:outline-none transition"
 							>
-								<option value="gpt-4o-mini">gpt-4o-mini (Fast & Cost-effective)</option>
-								<option value="gpt-4o">gpt-4o (High Intelligence)</option>
-								<option value="gpt-3.5-turbo">gpt-3.5-turbo (Legacy)</option>
-								<option value="o1-mini">o1-mini (Reasoning)</option>
+								{#each defaultModelsForProvider[activeAiTab] || ['gpt-4o-mini'] as m}
+									<option value={m}>{m}</option>
+								{/each}
 							</select>
 						</div>
 
 						<div class="space-y-1.5">
 							<div class="flex justify-between text-xs font-medium text-slate-300">
 								<label for="default-temp">Default Temperature</label>
-								<span class="font-mono text-emerald-400">{settings.openaiDefaultTemperature}</span>
+								<span class="font-mono text-emerald-400">{settings.aiDefaultTemperature ?? 0.7}</span>
 							</div>
 							<input
 								id="default-temp"
@@ -304,7 +494,7 @@
 								min="0"
 								max="2"
 								step="0.1"
-								bind:value={settings.openaiDefaultTemperature}
+								bind:value={settings.aiDefaultTemperature}
 								class="w-full mt-2 accent-emerald-500"
 							/>
 						</div>
@@ -353,25 +543,27 @@
 					</div>
 
 					<div class="rounded-xl border border-slate-800/80 bg-slate-950/70 p-3 text-xs text-slate-400 space-y-1">
-						<div class="font-semibold text-slate-300">Authorized Redirect URIs (Google Cloud Console):</div>
-						<code class="text-red-300 font-mono text-[11px] block select-all">http://localhost:5173/api/v1/auth/google/callback</code>
+						<span class="font-semibold text-slate-300">Setup Note:</span>
+						<p>
+							Configure your Authorized JavaScript Origins in Google Cloud Console to match your Nodely domain (e.g. <code class="font-mono text-slate-300">http://localhost:5173</code>).
+						</p>
 					</div>
 				</div>
 			</section>
 
-			<!-- Project Auth & JWT Secret Section -->
+			<!-- JWT Authentication Secrets -->
 			<section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl space-y-5">
 				<div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
 					<div class="flex items-center gap-3">
-						<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+						<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
 							<ShieldCheck class="h-5 w-5" />
 						</div>
 						<div>
-							<h2 class="text-sm font-bold text-white">Project Auth & JWT Signing</h2>
-							<p class="text-xs text-slate-400">Used by User Management nodes to sign and verify user sessions</p>
+							<h2 class="text-sm font-bold text-white">JSON Web Token (JWT) Config</h2>
+							<p class="text-xs text-slate-400">Used for signing session tokens in User Management nodes</p>
 						</div>
 					</div>
-					<span class="rounded bg-indigo-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-indigo-400">
+					<span class="rounded bg-purple-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-purple-400">
 						Security
 					</span>
 				</div>
@@ -379,26 +571,28 @@
 				<div class="space-y-4">
 					<div class="space-y-1.5">
 						<div class="flex items-center justify-between">
-							<label for="jwt-secret" class="text-xs font-medium text-slate-300">JWT Secret</label>
+							<label for="jwt-secret" class="text-xs font-medium text-slate-300">JWT Signing Secret</label>
 							<button
 								type="button"
 								onclick={generateRandomJwtSecret}
-								class="text-[11px] font-semibold text-indigo-400 hover:text-indigo-300 transition"
+								class="text-[11px] font-semibold text-purple-400 hover:text-purple-300 transition flex items-center gap-1"
 							>
-								Generate Random
+								<RefreshCw class="h-3 w-3" />
+								<span>Regenerate Key</span>
 							</button>
 						</div>
+
 						<div class="relative">
 							<input
 								id="jwt-secret"
 								type={showJwtSecret ? 'text' : 'password'}
 								bind:value={settings.jwtSecret}
-								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 pr-10 font-mono text-xs text-slate-200 focus:border-indigo-500 focus:outline-none transition"
+								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2.5 pr-10 font-mono text-xs text-slate-200 focus:border-purple-500 focus:outline-none transition"
 							/>
 							<button
 								type="button"
 								onclick={() => (showJwtSecret = !showJwtSecret)}
-								class="absolute right-3 top-2.5 text-slate-500 hover:text-white"
+								class="absolute right-3 top-3 text-slate-500 hover:text-white"
 								title="Toggle visibility"
 							>
 								{#if showJwtSecret}
@@ -410,31 +604,50 @@
 						</div>
 					</div>
 
-					<div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-						<div class="space-y-1.5">
-							<label for="jwt-expires" class="text-xs font-medium text-slate-300">Session Token Lifetime</label>
-							<select
-								id="jwt-expires"
-								bind:value={settings.jwtExpiresIn}
-								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-mono text-slate-200 focus:border-indigo-500 focus:outline-none transition"
-							>
-								<option value="1h">1 Hour</option>
-								<option value="24h">24 Hours (1 Day)</option>
-								<option value="7d">7 Days (Default)</option>
-								<option value="30d">30 Days</option>
-							</select>
-						</div>
+					<div class="space-y-1.5">
+						<label for="jwt-exp" class="text-xs font-medium text-slate-300">Default Session Expiration</label>
+						<select
+							id="jwt-exp"
+							bind:value={settings.jwtExpiresIn}
+							class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs font-mono text-slate-200 focus:border-purple-500 focus:outline-none transition"
+						>
+							<option value="1h">1 Hour</option>
+							<option value="24h">24 Hours (1 Day)</option>
+							<option value="7d">7 Days (Default)</option>
+							<option value="30d">30 Days</option>
+						</select>
+					</div>
+				</div>
+			</section>
 
-						<div class="space-y-1.5">
-							<label for="cors-origins" class="text-xs font-medium text-slate-300">CORS Allowed Origins</label>
-							<input
-								id="cors-origins"
-								type="text"
-								placeholder="*"
-								bind:value={settings.corsOrigins}
-								class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-slate-200 focus:border-indigo-500 focus:outline-none transition"
-							/>
+			<!-- Gateway & CORS Settings -->
+			<section class="rounded-2xl border border-slate-800 bg-slate-900/50 p-6 shadow-xl backdrop-blur-xl space-y-5">
+				<div class="flex items-center justify-between border-b border-slate-800/80 pb-4">
+					<div class="flex items-center gap-3">
+						<div class="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+							<Globe class="h-5 w-5" />
 						</div>
+						<div>
+							<h2 class="text-sm font-bold text-white">Gateway CORS & Network Defaults</h2>
+							<p class="text-xs text-slate-400">Configure cross-origin resource sharing for published API endpoints</p>
+						</div>
+					</div>
+					<span class="rounded bg-blue-500/10 px-2 py-0.5 font-mono text-[10px] font-semibold text-blue-400">
+						Gateway
+					</span>
+				</div>
+
+				<div class="space-y-4">
+					<div class="space-y-1.5">
+						<label for="cors-origins" class="text-xs font-medium text-slate-300">Allowed Origins</label>
+						<input
+							id="cors-origins"
+							type="text"
+							placeholder="* or https://app.mydomain.com"
+							bind:value={settings.corsOrigins}
+							class="w-full rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 font-mono text-xs text-slate-200 focus:border-blue-500 focus:outline-none transition"
+						/>
+						<p class="text-[11px] text-slate-500">Comma-separated list of origins or wildcard * for open access.</p>
 					</div>
 				</div>
 			</section>

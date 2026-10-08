@@ -305,7 +305,7 @@
 </script>
 
 <svelte:head>
-	<title>Nodely — API Route Browser & Workflows</title>
+	<title>Nodely — Visual Nodeflow Builder & Engine</title>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-950 text-slate-100 flex flex-col select-none">
@@ -327,17 +327,17 @@
 					<span
 						class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 					>
-						v0.3.0
+						v0.4.0
 					</span>
 				</div>
-				<p class="text-xs text-slate-400">Visual API Builder & Endpoint Manager</p>
+				<p class="text-xs text-slate-400">Visual Nodeflow Builder & Engine</p>
 			</div>
 		</div>
 
 		<!-- Center: Navigation Tabs -->
 		<div class="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
 			<a href="/" class="px-3 py-1 text-xs font-semibold text-white bg-slate-800 rounded-lg shadow-sm">
-				API Routes
+				Nodeflows
 			</a>
 			<a href="/users" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
 				Project Users
@@ -360,7 +360,7 @@
 				type="button"
 				onclick={loadRoutes}
 				class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/80 px-3 py-2 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
-				title="Refresh routes list"
+				title="Refresh Nodeflows list"
 			>
 				<RefreshCw class="h-3.5 w-3.5 {isLoading ? 'animate-spin' : ''}" />
 				<span>Refresh</span>
@@ -369,9 +369,9 @@
 			<button
 				type="button"
 				onclick={() => {
-					newTitle = 'New API Endpoint';
+					newTitle = 'New Nodeflow';
 					newMethod = 'GET';
-					newPath = `/api/v1/endpoint-${Date.now().toString(36).substring(2, 6)}`;
+					newPath = `/api/v1/flow-${Date.now().toString(36).substring(2, 6)}`;
 					newDescription = '';
 					newTemplate = 'empty';
 					isCreateOpen = true;
@@ -379,7 +379,7 @@
 				class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-xs font-semibold text-white shadow-lg shadow-emerald-950/60 hover:from-emerald-500 hover:to-teal-500 transition active:scale-95"
 			>
 				<Plus class="h-4 w-4" />
-				<span>Create New Route</span>
+				<span>Create New Nodeflow</span>
 			</button>
 		</div>
 	</header>
@@ -390,16 +390,16 @@
 		<div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 			<div class="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 backdrop-blur">
 				<div class="flex items-center justify-between text-slate-400 text-xs font-medium">
-					<span>Total API Endpoints</span>
+					<span>Total Nodeflows</span>
 					<Layers class="h-4 w-4 text-blue-400" />
 				</div>
 				<div class="mt-2 text-2xl font-bold text-white">{stats.total}</div>
-				<p class="mt-1 text-[11px] text-slate-500">Managed visual backend pipelines</p>
+				<p class="mt-1 text-[11px] text-slate-500">Visual node-based pipelines</p>
 			</div>
 
 			<div class="rounded-2xl border border-emerald-500/20 bg-emerald-950/10 p-4 backdrop-blur">
 				<div class="flex items-center justify-between text-emerald-400 text-xs font-medium">
-					<span>Live Hosted Endpoints</span>
+					<span>Live Nodeflows</span>
 					<Radio class="h-4 w-4 text-emerald-400 animate-pulse" />
 				</div>
 				<div class="mt-2 text-2xl font-bold text-emerald-400">{stats.live}</div>
@@ -408,7 +408,7 @@
 
 			<div class="rounded-2xl border border-slate-800/80 bg-slate-900/40 p-4 backdrop-blur">
 				<div class="flex items-center justify-between text-slate-400 text-xs font-medium">
-					<span>Draft Workflows</span>
+					<span>Draft Nodeflows</span>
 					<FileCode class="h-4 w-4 text-amber-400" />
 				</div>
 				<div class="mt-2 text-2xl font-bold text-amber-400">{stats.drafts}</div>
@@ -434,7 +434,7 @@
 				<Search class="absolute left-3 top-3 h-4 w-4 text-slate-500" />
 				<input
 					type="text"
-					placeholder="Search routes by path, title, or description..."
+					placeholder="Search Nodeflows by path, title, or description..."
 					bind:value={searchQuery}
 					class="w-full rounded-xl border border-slate-800 bg-slate-900/80 pl-9 pr-4 py-2.5 text-xs text-slate-200 placeholder-slate-500 focus:border-blue-500 focus:outline-none transition"
 				/>
@@ -526,7 +526,7 @@
 								</div>
 
 								<div class="text-sm font-bold text-white">
-									{updatingAction === 'publishing' ? 'Hosting Endpoint Live...' : 'Taking Endpoint Down...'}
+									{updatingAction === 'publishing' ? 'Hosting Nodeflow Live...' : 'Taking Nodeflow Down...'}
 								</div>
 
 								<div class="mt-2 inline-block max-w-[90%] truncate rounded-md bg-slate-900 px-2.5 py-1 font-mono text-[11px] text-slate-300 border border-slate-800 shadow-inner">
@@ -535,8 +535,8 @@
 
 								<p class="mt-2 text-[10px] text-slate-400 max-w-[85%] leading-relaxed">
 									{updatingAction === 'publishing'
-										? 'Registering route on public gateway & syncing state...'
-										: 'De-registering route and revoking public gateway access...'}
+										? 'Registering Nodeflow on gateway & syncing state...'
+										: 'De-registering Nodeflow and revoking gateway access...'}
 								</p>
 							</div>
 						{/if}
@@ -593,7 +593,7 @@
 									{route.title}
 								</h2>
 								<p class="mt-1 text-xs text-slate-400 line-clamp-2 leading-relaxed">
-									{route.description || 'Custom visual API workflow created in Nodely.'}
+									{route.description || 'Custom visual Nodeflow created in Nodely.'}
 								</p>
 							</div>
 
@@ -641,7 +641,7 @@
 									class="flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition disabled:opacity-40 {route.isPublished
 										? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-900/40'
 										: 'border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-emerald-400'}"
-									title={route.isPublished ? 'Unpublish endpoint' : 'Host endpoint live'}
+									title={route.isPublished ? 'Unpublish Nodeflow' : 'Host Nodeflow live'}
 								>
 									<Radio class="h-3.5 w-3.5" />
 									<span>{route.isPublished ? 'Live' : 'Publish'}</span>
@@ -653,7 +653,7 @@
 									onclick={(e) => confirmDelete(route, e)}
 									disabled={isUpdatingThisCard}
 									class="rounded-lg p-1.5 text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition disabled:opacity-40"
-									title="Delete route"
+									title="Delete Nodeflow"
 								>
 									<Trash2 class="h-3.5 w-3.5" />
 								</button>
@@ -700,28 +700,28 @@
 				<div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-blue-500/10 text-blue-400">
 					<Network class="h-6 w-6" />
 				</div>
-				<h3 class="mt-4 text-base font-bold text-slate-200">No matching API routes</h3>
+				<h3 class="mt-4 text-base font-bold text-slate-200">No matching Nodeflows</h3>
 				<p class="mt-1 text-xs text-slate-500 max-w-sm">
 					{#if searchQuery || selectedMethod !== 'ALL' || selectedStatus !== 'ALL'}
-						Try clearing your filters or search keywords to view all endpoints.
+						Try clearing your filters or search keywords to view all Nodeflows.
 					{:else}
-						You haven't created any API routes yet. Build your first pipeline visually with nodes.
+						You haven't created any Nodeflows yet. Build your first pipeline visually with nodes.
 					{/if}
 				</p>
 				<button
 					type="button"
 					onclick={() => {
-						newTitle = 'My First API';
+						newTitle = 'My First Nodeflow';
 						newMethod = 'GET';
 						newPath = '/api/v1/hello';
-						newDescription = 'Simple starter endpoint';
+						newDescription = 'Simple starter Nodeflow';
 						newTemplate = 'empty';
 						isCreateOpen = true;
 					}}
 					class="mt-6 flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-500 transition shadow-lg shadow-blue-900/40"
 				>
 					<Plus class="h-4 w-4" />
-					<span>Create Your First Route</span>
+					<span>Create Your First Nodeflow</span>
 				</button>
 			</div>
 		{/if}
@@ -743,7 +743,7 @@
 							<Plus class="h-4 w-4" />
 						</div>
 						<div>
-							<h3 class="text-sm font-bold text-white">Create New API Route</h3>
+							<h3 class="text-sm font-bold text-white">Create New Nodeflow</h3>
 							<p class="text-[11px] text-slate-400">Define your endpoint and pick a starter blueprint</p>
 						</div>
 					</div>
@@ -759,7 +759,7 @@
 				<div class="space-y-4">
 					<!-- Route Title -->
 					<div class="space-y-1">
-						<label for="route-title" class="text-xs font-medium text-slate-300">Route Name</label>
+						<label for="route-title" class="text-xs font-medium text-slate-300">Nodeflow Name</label>
 						<input
 							id="route-title"
 							type="text"
@@ -805,7 +805,7 @@
 							id="route-desc"
 							type="text"
 							bind:value={newDescription}
-							placeholder="Brief description of what this endpoint does..."
+							placeholder="Brief description of what this Nodeflow does..."
 							class="w-full rounded-xl border border-slate-800 bg-slate-900 px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
 						/>
 					</div>
@@ -1005,7 +1005,7 @@
 						<Trash2 class="h-5 w-5" />
 					</div>
 					<div>
-						<h3 class="text-sm font-bold text-white">Delete Route?</h3>
+						<h3 class="text-sm font-bold text-white">Delete Nodeflow?</h3>
 						<p class="text-xs text-slate-400">This will remove "{routeToDelete.title}".</p>
 					</div>
 				</div>

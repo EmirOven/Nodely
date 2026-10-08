@@ -15,7 +15,8 @@ import type {
 	DelayData,
 	GoogleAuthData,
 	UserManagementData,
-	OpenAiData
+	OpenAiData,
+	AiNodeData
 } from '../types';
 
 // Global in-memory storage for simulated database
@@ -536,8 +537,16 @@ export async function executeFlow(
 					success ? 'info' : 'warn',
 					`User Management (${action}): ${success ? 'SUCCESS' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
 				);
-			} else if (nodeType === 'openAiNode') {
-				const aiData = nodeData as unknown as OpenAiData;
+			} else if (nodeType === 'aiNode' || nodeType === 'openAiNode') {
+				const aiData = nodeData as unknown as AiNodeData;
+				const provider = (aiData.provider || 'openai') as string;
+				const model =
+					aiData.model ||
+					(provider === 'anthropic'
+						? 'claude-3-5-sonnet-20241022'
+						: provider === 'google'
+							? 'gemini-1.5-flash'
+							: 'gpt-4o-mini');
 
 				const interpolate = (tpl: string) => {
 					if (!tpl) return '';
@@ -554,24 +563,32 @@ export async function executeFlow(
 
 				const resolvedSystem = interpolate(aiData.systemPrompt || 'You are an AI assistant.');
 				const resolvedUser = interpolate(aiData.userPrompt || 'Process this request');
-				const apiKey = aiData.apiKeyOverride || (typeof process !== 'undefined' ? process.env?.OPENAI_API_KEY : '');
+				const env = typeof process !== 'undefined' ? process.env : ({} as any);
+
+				let apiKey = aiData.apiKeyOverride || '';
+				if (!apiKey) {
+					if (provider === 'openai') apiKey = env?.OPENAI_API_KEY || '';
+					else if (provider === 'anthropic') apiKey = env?.ANTHROPIC_API_KEY || '';
+					else if (provider === 'google') apiKey = env?.GEMINI_API_KEY || '';
+					else if (provider === 'groq') apiKey = env?.GROQ_API_KEY || '';
+				}
 
 				let aiText = '';
 				let aiJson: any = null;
 				let success = true;
 				let errorMsg: string | undefined = undefined;
 
-				if (apiKey && apiKey.startsWith('sk-')) {
+				if (provider === 'openai' && apiKey) {
 					try {
-						addLog(currentId, nodeTitle, 'info', `Calling OpenAI API (${aiData.model || 'gpt-4o-mini'})...`);
+						addLog(currentId, nodeTitle, 'info', `Calling OpenAI API (${model})...`);
 						const res = await fetch('https://api.openai.com/v1/chat/completions', {
 							method: 'POST',
 							headers: {
 								'Content-Type': 'application/json',
-								'Authorization': `Bearer ${apiKey}`
+								Authorization: `Bearer ${apiKey}`
 							},
 							body: JSON.stringify({
-								model: aiData.model || 'gpt-4o-mini',
+								model,
 								messages: [
 									{ role: 'system', content: resolvedSystem },
 									{ role: 'user', content: resolvedUser }
@@ -585,42 +602,185 @@ export async function executeFlow(
 						if (res.ok) {
 							const completion = await res.json();
 							aiText = completion.choices?.[0]?.message?.content || '';
-							if (aiData.responseFormat === 'json_object') {
-								try {
-									aiJson = JSON.parse(aiText);
-								} catch {
-									aiJson = { text: aiText };
-								}
-							}
 							success = true;
 						} else {
 							const errBody = await res.json().catch(() => ({}));
-							errorMsg = errBody?.error?.message || `OpenAI HTTP error ${res.status}`;
+							errorMsg = errBody?.error?.message || `OpenAI error ${res.status}`;
 							success = false;
 						}
 					} catch (e: any) {
 						errorMsg = e.message || 'Failed to call OpenAI API';
 						success = false;
 					}
+				} else if (provider === 'anthropic' && apiKey) {
+					try {
+						addLog(currentId, nodeTitle, 'info', `Calling Anthropic API (${model})...`);
+						const res = await fetch('https://api.anthropic.com/v1/messages', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'x-api-key': apiKey,
+								'anthropic-version': '2023-06-01'
+							},
+							body: JSON.stringify({
+								model,
+								system: resolvedSystem,
+								messages: [{ role: 'user', content: resolvedUser }],
+								temperature: aiData.temperature ?? 0.7,
+								max_tokens: aiData.maxTokens ?? 1000
+							})
+						});
+
+						if (res.ok) {
+							const completion = await res.json();
+							aiText = completion.content?.[0]?.text || '';
+							success = true;
+						} else {
+							const errBody = await res.json().catch(() => ({}));
+							errorMsg = errBody?.error?.message || `Anthropic error ${res.status}`;
+							success = false;
+						}
+					} catch (e: any) {
+						errorMsg = e.message || 'Failed to call Anthropic API';
+						success = false;
+					}
+				} else if (provider === 'google' && apiKey) {
+					try {
+						addLog(currentId, nodeTitle, 'info', `Calling Google Gemini API (${model})...`);
+						const res = await fetch(
+							`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+							{
+								method: 'POST',
+								headers: { 'Content-Type': 'application/json' },
+								body: JSON.stringify({
+									contents: [
+										{
+											role: 'user',
+											parts: [{ text: `${resolvedSystem ? resolvedSystem + '\n\n' : ''}${resolvedUser}` }]
+										}
+									],
+									generationConfig: {
+										temperature: aiData.temperature ?? 0.7,
+										maxOutputTokens: aiData.maxTokens ?? 1000
+									}
+								})
+							}
+						);
+
+						if (res.ok) {
+							const data = await res.json();
+							aiText = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+							success = true;
+						} else {
+							const errBody = await res.json().catch(() => ({}));
+							errorMsg = errBody?.error?.message || `Google Gemini error ${res.status}`;
+							success = false;
+						}
+					} catch (e: any) {
+						errorMsg = e.message || 'Failed to call Google Gemini API';
+						success = false;
+					}
+				} else if (provider === 'groq' && apiKey) {
+					try {
+						addLog(currentId, nodeTitle, 'info', `Calling Groq API (${model})...`);
+						const res = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								Authorization: `Bearer ${apiKey}`
+							},
+							body: JSON.stringify({
+								model,
+								messages: [
+									{ role: 'system', content: resolvedSystem },
+									{ role: 'user', content: resolvedUser }
+								],
+								temperature: aiData.temperature ?? 0.7,
+								max_tokens: aiData.maxTokens ?? 1000
+							})
+						});
+
+						if (res.ok) {
+							const completion = await res.json();
+							aiText = completion.choices?.[0]?.message?.content || '';
+							success = true;
+						} else {
+							const errBody = await res.json().catch(() => ({}));
+							errorMsg = errBody?.error?.message || `Groq error ${res.status}`;
+							success = false;
+						}
+					} catch (e: any) {
+						errorMsg = e.message || 'Failed to call Groq API';
+						success = false;
+					}
+				} else if (provider === 'custom') {
+					const baseUrl = aiData.baseUrl || 'http://localhost:11434/v1';
+					try {
+						addLog(currentId, nodeTitle, 'info', `Calling Custom LLM Endpoint at ${baseUrl} (${model})...`);
+						const res = await fetch(`${baseUrl.replace(/\/+$/, '')}/chat/completions`, {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								...(apiKey ? { Authorization: `Bearer ${apiKey}` } : {})
+							},
+							body: JSON.stringify({
+								model,
+								messages: [
+									{ role: 'system', content: resolvedSystem },
+									{ role: 'user', content: resolvedUser }
+								],
+								temperature: aiData.temperature ?? 0.7,
+								max_tokens: aiData.maxTokens ?? 1000
+							})
+						});
+
+						if (res.ok) {
+							const completion = await res.json();
+							aiText = completion.choices?.[0]?.message?.content || '';
+							success = true;
+						} else {
+							const errBody = await res.json().catch(() => ({}));
+							errorMsg = errBody?.error?.message || `Custom API error ${res.status}`;
+							success = false;
+						}
+					} catch (e: any) {
+						errorMsg = e.message || 'Failed to call custom LLM endpoint';
+						success = false;
+					}
 				} else {
-					addLog(currentId, nodeTitle, 'info', `Simulating OpenAI completion (no API key configured).`);
-					aiText = `[Simulated ${aiData.model || 'gpt-4o-mini'} Completion]: Successfully processed prompt "${resolvedUser.slice(0, 80)}${resolvedUser.length > 80 ? '...' : ''}". Add your OpenAI API Key in Settings to enable live LLM generation.`;
+					addLog(
+						currentId,
+						nodeTitle,
+						'info',
+						`Simulating ${provider.toUpperCase()} completion via AI SDK (no API key configured).`
+					);
+					aiText = `[Simulated ${provider.toUpperCase()} (${model}) via AI SDK]: Successfully processed prompt "${resolvedUser.slice(0, 80)}${resolvedUser.length > 80 ? '...' : ''}". Add API Key in Settings to execute live LLM calls.`;
 					if (aiData.responseFormat === 'json_object') {
 						aiJson = {
 							status: 'simulated_success',
-							model: aiData.model || 'gpt-4o-mini',
+							provider,
+							model,
 							promptReceived: resolvedUser,
-							note: 'Configure OpenAI API Key in Settings for live LLM completions.'
+							note: 'Configure Provider API Key in Settings for live LLM completions.'
 						};
 					}
 					success = true;
+				}
+
+				if (success && aiData.responseFormat === 'json_object' && !aiJson && aiText) {
+					try {
+						aiJson = JSON.parse(aiText);
+					} catch {
+						aiJson = { text: aiText };
+					}
 				}
 
 				nextHandleOut = success ? 'success' : 'error';
 				stepOutput = {
 					text: aiText,
 					json: aiJson,
-					model: aiData.model || 'gpt-4o-mini',
+					provider,
+					model,
 					success,
 					error: errorMsg,
 					branchTaken: nextHandleOut
@@ -642,7 +802,7 @@ export async function executeFlow(
 					currentId,
 					nodeTitle,
 					success ? 'info' : 'error',
-					`OpenAI Node: ${success ? 'COMPLETED' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
+					`AI Node (${provider}/${model}): ${success ? 'COMPLETED' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
 				);
 			} else if (nodeType === 'httpResponse') {
 				const respData = nodeData as unknown as HttpResponseData;

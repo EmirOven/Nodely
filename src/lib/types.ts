@@ -99,18 +99,25 @@ export interface UserManagementData {
 	isExecuting?: boolean;
 }
 
-export interface OpenAiData {
+export type AiProviderType = 'openai' | 'anthropic' | 'google' | 'groq' | 'custom';
+
+export interface AiNodeData {
 	title: string;
-	model: 'gpt-4o-mini' | 'gpt-4o' | 'gpt-3.5-turbo' | 'o1-mini';
+	provider: AiProviderType;
+	model: string;
 	systemPrompt: string;
 	userPrompt: string;
 	temperature: number;
 	maxTokens: number;
 	responseFormat: 'text' | 'json_object';
 	apiKeyOverride?: string;
+	baseUrl?: string;
 	description?: string;
 	isExecuting?: boolean;
 }
+
+// Backwards compatibility alias
+export type OpenAiData = AiNodeData;
 
 export type NodelyNodeType =
 	| 'httpTrigger'
@@ -124,6 +131,7 @@ export type NodelyNodeType =
 	| 'delayNode'
 	| 'googleAuthNode'
 	| 'userManagementNode'
+	| 'aiNode'
 	| 'openAiNode';
 
 export interface ExecutionLog {

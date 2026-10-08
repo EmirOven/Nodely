@@ -24,6 +24,7 @@
 	import GoogleAuthNode from './nodes/GoogleAuthNode.svelte';
 	import UserManagementNode from './nodes/UserManagementNode.svelte';
 	import OpenAiNode from './nodes/OpenAiNode.svelte';
+	import AiNode from './nodes/AiNode.svelte';
 
 	import Navbar from './Navbar.svelte';
 	import Sidebar from './Sidebar.svelte';
@@ -48,7 +49,8 @@
 		delayNode: DelayNode,
 		googleAuthNode: GoogleAuthNode,
 		userManagementNode: UserManagementNode,
-		openAiNode: OpenAiNode
+		aiNode: AiNode,
+		openAiNode: AiNode
 	};
 
 	interface Props {
@@ -337,9 +339,11 @@
 					role: 'user'
 				};
 				break;
+			case 'aiNode':
 			case 'openAiNode':
 				data = {
-					title: 'OpenAI Completion',
+					title: 'AI Completion',
+					provider: 'openai',
 					model: 'gpt-4o-mini',
 					systemPrompt: 'You are an AI assistant helping with API processing.',
 					userPrompt: 'Process this request: {{payload.prompt || payload.text}}',

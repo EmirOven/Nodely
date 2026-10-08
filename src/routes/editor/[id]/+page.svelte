@@ -7,7 +7,7 @@
 </script>
 
 <svelte:head>
-	<title>{data.route ? `${data.route.title} — Nodely API Builder` : 'Nodely API Builder'}</title>
+	<title>{data.route ? `${data.route.title} — Nodely Nodeflow Builder` : 'Nodely Nodeflow Builder'}</title>
 </svelte:head>
 
 <SvelteFlowProvider>
@@ -25,7 +25,7 @@
 	{:else}
 		<FlowCanvas
 			routeId={data.id || 'custom-route'}
-			routeTitle="New Workflow"
+			routeTitle="New Nodeflow"
 			routeMethod="GET"
 			routePath="/api/v1/custom"
 		/>

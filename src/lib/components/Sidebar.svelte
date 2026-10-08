@@ -112,15 +112,15 @@
 		{
 			type: 'userManagementNode' as NodelyNodeType,
 			title: 'User Management',
-			desc: 'Supabase-style auth: Sign up, login, delete & manage project users',
+			desc: 'Built-in authentication: Sign up, login, delete & manage users',
 			category: 'Auth & Users',
 			icon: Users,
 			color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30 hover:border-indigo-500/60'
 		},
 		{
-			type: 'openAiNode' as NodelyNodeType,
-			title: 'OpenAI Completion',
-			desc: 'Run LLM chat completions with custom system & user prompt templates',
+			type: 'aiNode' as NodelyNodeType,
+			title: 'AI Completion',
+			desc: 'Universal LLM node (OpenAI, Anthropic, Gemini, Groq, Ollama) via AI SDK',
 			category: 'AI & LLM',
 			icon: Sparkles,
 			color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500/60'

@@ -7,6 +7,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0] - 2026-10-08
+
+### Added
+- **Universal Generic AI Node (`aiNode`)**:
+  - Transformed the OpenAI completion node into a versatile, multi-provider AI node compatible with Vercel AI SDK conventions.
+  - Supports multiple leading AI providers out-of-the-box:
+    - **OpenAI**: `gpt-4o-mini`, `gpt-4o`, `gpt-3.5-turbo`, `o1-mini`, `o3-mini`
+    - **Anthropic Claude**: `claude-3-5-sonnet-20241022`, `claude-3-5-haiku-20241022`, `claude-3-opus-20240229`
+    - **Google Gemini**: `gemini-1.5-flash`, `gemini-1.5-pro`, `gemini-2.0-flash`
+    - **Groq**: `llama-3.3-70b-versatile`, `mixtral-8x7b-32768`, `gemma2-9b-it`
+    - **Ollama / Custom API**: `llama3.2`, `deepseek-r1`, `mistral`, `qwen2.5`, or custom model IDs with configurable Base URL
+  - Direct execution support across all providers with automated fallback simulation for local test runs.
+  - Generates AI SDK compatible code in both SvelteKit and Express exporters.
+  - Configurable system prompts, user prompt templates with variable interpolation (`{{payload.field}}`), temperature slider, max tokens, and format toggle (Text vs JSON Object).
+- **Multi-Provider AI Settings in Settings (`/settings`)**:
+  - Tabbed interface to manage credentials for OpenAI, Anthropic Claude, Google Gemini, Groq, and Ollama/Custom endpoints.
+  - Live API key verification tester per provider.
+  - Global default model and temperature controls.
+
+### Changed
+- **Terminology Shift to "Nodeflows"**:
+  - Replaced all legacy references to "projects" and "API routes" across navigation tabs, headers, modal dialogs, and cards with **Nodeflows**.
+  - Root route (`/`) navigation and titles updated to visual Nodeflow management.
+  - Navbar and settings navigation cleanly link to "Nodeflows".
+- **User Management Node Cleanup**:
+  - Completely removed external vendor mentions (Supabase) from the User Management node header, badges, and sidebar descriptions.
+- Bumped project version to `0.4.0` in `package.json`, navbar badges, and dashboard headers.
+
+---
+
 ## [0.3.0] - 2026-10-08
 
 ### Added

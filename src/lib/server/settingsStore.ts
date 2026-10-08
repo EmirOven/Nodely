@@ -2,9 +2,17 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 export interface NodelySettings {
+	aiProvider: 'openai' | 'anthropic' | 'google' | 'groq' | 'custom';
 	openaiApiKey: string;
-	openaiDefaultModel: string;
-	openaiDefaultTemperature: number;
+	anthropicApiKey: string;
+	geminiApiKey: string;
+	groqApiKey: string;
+	customAiBaseUrl: string;
+	customAiApiKey: string;
+	aiDefaultModel: string;
+	aiDefaultTemperature: number;
+	openaiDefaultModel?: string;
+	openaiDefaultTemperature?: number;
 	googleClientId: string;
 	googleClientSecret: string;
 	jwtSecret: string;
@@ -16,7 +24,15 @@ export interface NodelySettings {
 const SETTINGS_FILE = path.resolve(process.cwd(), '.nodely-settings.json');
 
 const defaultSettings: NodelySettings = {
+	aiProvider: 'openai',
 	openaiApiKey: '',
+	anthropicApiKey: '',
+	geminiApiKey: '',
+	groqApiKey: '',
+	customAiBaseUrl: 'http://localhost:11434/v1',
+	customAiApiKey: '',
+	aiDefaultModel: 'gpt-4o-mini',
+	aiDefaultTemperature: 0.7,
 	openaiDefaultModel: 'gpt-4o-mini',
 	openaiDefaultTemperature: 0.7,
 	googleClientId: '',

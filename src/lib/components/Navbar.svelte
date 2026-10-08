@@ -83,10 +83,10 @@
 			<a
 				href="/"
 				class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition group"
-				title="Back to All Routes Browser"
+				title="Back to All Nodeflows"
 			>
 				<ArrowLeft class="h-3.5 w-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
-				<span>Routes</span>
+				<span>Nodeflows</span>
 			</a>
 			<a
 				href="/users"
@@ -99,7 +99,7 @@
 			<a
 				href="/settings"
 				class="flex items-center gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/60 px-2 py-1 text-xs font-medium text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition"
-				title="Project Settings & Secrets"
+				title="Nodeflow Settings & Secrets"
 			>
 				<Settings class="h-3.5 w-3.5 text-slate-400" />
 				<span class="hidden sm:inline">Settings</span>
@@ -114,9 +114,9 @@
 
 		<div>
 			<div class="flex items-center gap-2">
-				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodely API'}</h1>
+				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodeflow'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.3.0
+					v0.4.0
 				</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">

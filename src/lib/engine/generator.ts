@@ -11,7 +11,8 @@ import type {
 	DelayData,
 	GoogleAuthData,
 	UserManagementData,
-	OpenAiData
+	OpenAiData,
+	AiNodeData
 } from '../types';
 
 export function generateSvelteKitCode(nodes: Node[], edges: Edge[]): string {
@@ -201,18 +202,20 @@ export const ${method}: RequestHandler = async ({ request, url }) => {
 			code += `\t\tstate.sessionToken = 'tok_' + Math.random().toString(36).substring(2);\n\n`;
 			stepNum++;
 			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
-		} else if (current.type === 'openAiNode') {
-			const aiData = nodeData as unknown as OpenAiData;
-			code += `\t\t// ${stepNum}. OpenAI Completion (${aiData.model || 'gpt-4o-mini'})\n`;
-			code += `\t\tconst openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {\n`;
+		} else if (current.type === 'aiNode' || current.type === 'openAiNode') {
+			const aiData = nodeData as unknown as AiNodeData;
+			const provider = aiData.provider || 'openai';
+			const model = aiData.model || 'gpt-4o-mini';
+			code += `\t\t// ${stepNum}. AI Completion (${provider}/${model}) - AI SDK Compatible\n`;
+			code += `\t\tconst aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {\n`;
 			code += `\t\t\tmethod: 'POST',\n`;
-			code += `\t\t\theaders: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${process.env.OPENAI_API_KEY}\` },\n`;
+			code += `\t\t\theaders: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${process.env.AI_API_KEY || process.env.OPENAI_API_KEY}\` },\n`;
 			code += `\t\t\tbody: JSON.stringify({\n`;
-			code += `\t\t\t\tmodel: '${aiData.model || 'gpt-4o-mini'}',\n`;
+			code += `\t\t\t\tmodel: '${model}',\n`;
 			code += `\t\t\t\tmessages: [{ role: 'system', content: '${(aiData.systemPrompt || '').replace(/'/g, "\\'")}' }, { role: 'user', content: String(payload.prompt || payload.text || '') }]\n`;
 			code += `\t\t\t})\n`;
 			code += `\t\t}).then((r) => r.json());\n`;
-			code += `\t\tstate.aiResponse = { text: openAiResponse.choices?.[0]?.message?.content };\n\n`;
+			code += `\t\tstate.aiResponse = { text: aiResponse.choices?.[0]?.message?.content, provider: '${provider}', model: '${model}' };\n\n`;
 			stepNum++;
 			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
 		} else if (current.type === 'httpResponse') {
@@ -323,18 +326,20 @@ app.${method}('${path}', async (req, res) => {
 			code += `\t\tstate.sessionToken = 'tok_' + Math.random().toString(36).substring(2);\n\n`;
 			stepNum++;
 			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
-		} else if (current.type === 'openAiNode') {
-			const aiData = nodeData as unknown as OpenAiData;
-			code += `\t\t// ${stepNum}. OpenAI Completion (${aiData.model || 'gpt-4o-mini'})\n`;
-			code += `\t\tconst openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {\n`;
+		} else if (current.type === 'aiNode' || current.type === 'openAiNode') {
+			const aiData = nodeData as unknown as AiNodeData;
+			const provider = aiData.provider || 'openai';
+			const model = aiData.model || 'gpt-4o-mini';
+			code += `\t\t// ${stepNum}. AI Completion (${provider}/${model}) - AI SDK Compatible\n`;
+			code += `\t\tconst aiResponse = await fetch('https://api.openai.com/v1/chat/completions', {\n`;
 			code += `\t\t\tmethod: 'POST',\n`;
-			code += `\t\t\theaders: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${process.env.OPENAI_API_KEY}\` },\n`;
+			code += `\t\t\theaders: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${process.env.AI_API_KEY || process.env.OPENAI_API_KEY}\` },\n`;
 			code += `\t\t\tbody: JSON.stringify({\n`;
-			code += `\t\t\t\tmodel: '${aiData.model || 'gpt-4o-mini'}',\n`;
+			code += `\t\t\t\tmodel: '${model}',\n`;
 			code += `\t\t\t\tmessages: [{ role: 'system', content: '${(aiData.systemPrompt || '').replace(/'/g, "\\'")}' }, { role: 'user', content: String(req.body.prompt || req.body.text || '') }]\n`;
 			code += `\t\t\t})\n`;
 			code += `\t\t}).then((r) => r.json());\n`;
-			code += `\t\tstate.aiResponse = { text: openAiResponse.choices?.[0]?.message?.content };\n\n`;
+			code += `\t\tstate.aiResponse = { text: aiResponse.choices?.[0]?.message?.content, provider: '${provider}', model: '${model}' };\n\n`;
 			stepNum++;
 			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
 		} else if (current.type === 'codeBlock') {

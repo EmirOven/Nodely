@@ -54,7 +54,7 @@
 
 		<div class="flex items-center gap-1.5">
 			<span class="rounded bg-indigo-500/10 px-1.5 py-0.5 text-[10px] font-medium text-indigo-400">
-				Supabase Auth
+				User Auth
 			</span>
 			<button
 				type="button"
