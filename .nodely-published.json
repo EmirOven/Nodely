@@ -112,5 +112,163 @@
     "nodes": [],
     "edges": [],
     "publishedAt": "2026-10-08T12:33:05.751Z"
+  },
+  {
+    "id": "user-auth",
+    "title": "Register Endpoint",
+    "method": "POST",
+    "path": "/api/v1/auth/register",
+    "nodes": [
+      {
+        "id": "trigger-1",
+        "type": "httpTrigger",
+        "position": {
+          "x": 300,
+          "y": 50
+        },
+        "data": {
+          "title": "Register Endpoint",
+          "method": "POST",
+          "path": "/api/v1/auth/register"
+        },
+        "measured": {
+          "width": 320,
+          "height": 216
+        }
+      },
+      {
+        "id": "code-1",
+        "type": "codeBlock",
+        "position": {
+          "x": 260,
+          "y": 280
+        },
+        "data": {
+          "title": "Validate & Hash",
+          "code": "// Validate payload\nconst errors = [];\nif (!payload.email || !payload.email.includes('@')) {\n  errors.push('Valid email is required');\n}\nif (!payload.password || payload.password.length < 6) {\n  errors.push('Password must be at least 6 characters');\n}\n\nlog('Validation checked. Errors count: ' + errors.length);\n\nconst isValid = errors.length === 0;\nconst userId = 'usr_' + Math.random().toString(36).substring(2, 9);\n\nreturn {\n  isValid,\n  errors,\n  user: isValid ? {\n    id: userId,\n    name: payload.name || 'Anonymous',\n    email: payload.email,\n    role: payload.role || 'member',\n    createdAt: new Date().toISOString()\n  } : null\n};"
+        },
+        "measured": {
+          "width": 384,
+          "height": 263
+        }
+      },
+      {
+        "id": "cond-1",
+        "type": "conditional",
+        "position": {
+          "x": 300,
+          "y": 540
+        },
+        "data": {
+          "title": "Check Validity",
+          "expression": "payload.isValid === true"
+        },
+        "measured": {
+          "width": 320,
+          "height": 198
+        }
+      },
+      {
+        "id": "store-1",
+        "type": "dataStore",
+        "position": {
+          "x": 100,
+          "y": 760
+        },
+        "data": {
+          "title": "Save New User",
+          "operation": "set",
+          "collection": "users",
+          "keyExpr": "payload.user.id",
+          "valueExpr": "payload.user"
+        },
+        "measured": {
+          "width": 320,
+          "height": 259
+        }
+      },
+      {
+        "id": "resp-success",
+        "type": "httpResponse",
+        "position": {
+          "x": 100,
+          "y": 1020
+        },
+        "data": {
+          "title": "201 Created",
+          "statusCode": 201,
+          "bodyExpression": "{\n  success: true,\n  message: 'User registered successfully',\n  user: payload.user\n}"
+        },
+        "measured": {
+          "width": 320,
+          "height": 283
+        }
+      },
+      {
+        "id": "resp-error",
+        "type": "httpResponse",
+        "position": {
+          "x": 520,
+          "y": 760
+        },
+        "data": {
+          "title": "400 Bad Request",
+          "statusCode": 400,
+          "bodyExpression": "{\n  success: false,\n  error: 'Validation failed',\n  details: payload.errors\n}"
+        },
+        "measured": {
+          "width": 320,
+          "height": 283
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1-2",
+        "source": "trigger-1",
+        "target": "code-1",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #6366f1; stroke-width: 2px;"
+      },
+      {
+        "id": "e2-3",
+        "source": "code-1",
+        "target": "cond-1",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #6366f1; stroke-width: 2px;"
+      },
+      {
+        "id": "e3-4-true",
+        "source": "cond-1",
+        "target": "store-1",
+        "sourceHandle": "true",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #10b981; stroke-width: 2.5px;"
+      },
+      {
+        "id": "e4-5",
+        "source": "store-1",
+        "target": "resp-success",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #10b981; stroke-width: 2px;"
+      },
+      {
+        "id": "e3-6-false",
+        "source": "cond-1",
+        "target": "resp-error",
+        "sourceHandle": "false",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #ef4444; stroke-width: 2.5px;"
+      }
+    ],
+    "publishedAt": "2026-10-08T12:41:32.800Z"
   }
 ]

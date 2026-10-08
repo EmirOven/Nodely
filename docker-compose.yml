@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  nodely:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nodely
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - PORT=3000
+      - HOST=0.0.0.0
+    volumes:
+      - nodely-data:/app/data
+      - ./.nodely-published.json:/app/.nodely-published.json
+
+volumes:
+  nodely-data:
