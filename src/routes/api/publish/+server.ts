@@ -1,11 +1,11 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { publishFlow, unpublishFlow, getAllPublishedFlows, type PublishedFlow } from '$lib/server/publishedStore';
+import { publishFlow, unpublishFlow, getAllPublishedFlows, type PublishedFlow } from '../../../lib/server/publishedStore';
 
 export const GET: RequestHandler = async () => {
-	const flows = getAllPublishedFlows();
+	const flows: PublishedFlow[] = getAllPublishedFlows();
 	return json({
 		success: true,
-		endpoints: flows.map((f) => ({
+		endpoints: flows.map((f: PublishedFlow) => ({
 			id: f.id,
 			title: f.title,
 			method: f.method,

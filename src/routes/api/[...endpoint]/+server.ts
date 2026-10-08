@@ -1,7 +1,7 @@
 import { json, type RequestHandler, type RequestEvent } from '@sveltejs/kit';
-import { getPublishedFlow, getAllPublishedFlows } from '$lib/server/publishedStore';
-import { executeFlow } from '$lib/engine/executor';
-import type { TestRequestPayload } from '$lib/types';
+import { getPublishedFlow, getAllPublishedFlows, type PublishedFlow } from '../../../lib/server/publishedStore';
+import { executeFlow } from '../../../lib/engine/executor';
+import type { TestRequestPayload } from '../../../lib/types';
 
 async function handlePublishedRequest(event: RequestEvent) {
 	const { request, params, url } = event;
@@ -20,13 +20,13 @@ async function handlePublishedRequest(event: RequestEvent) {
 	}
 
 	if (!flow) {
-		const all = getAllPublishedFlows();
+		const all: PublishedFlow[] = getAllPublishedFlows();
 		return json(
 			{
 				error: `404 Not Found: No published Nodely endpoint matches ${method} ${fullPath}`,
 				method,
 				requestedPath: fullPath,
-				availableEndpoints: all.map((f) => `${f.method} ${f.path}`),
+				availableEndpoints: all.map((f: PublishedFlow) => `${f.method} ${f.path}`),
 				hint: 'Click "Publish API" in the Nodely editor to host this workflow live!'
 			},
 			{ status: 404 }

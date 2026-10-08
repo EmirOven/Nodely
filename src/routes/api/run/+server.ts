@@ -1,7 +1,7 @@
 import { json, type RequestHandler } from '@sveltejs/kit';
-import { executeFlow } from '$lib/engine/executor';
+import { executeFlow } from '../../../lib/engine/executor';
 import type { Node, Edge } from '@xyflow/svelte';
-import type { TestRequestPayload } from '$lib/types';
+import type { TestRequestPayload } from '../../../lib/types';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {

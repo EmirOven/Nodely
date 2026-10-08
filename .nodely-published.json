@@ -8,7 +8,10 @@
       {
         "id": "trigger-w",
         "type": "httpTrigger",
-        "position": { "x": 300, "y": 50 },
+        "position": {
+          "x": 300,
+          "y": 50
+        },
         "data": {
           "title": "Weather Query",
           "method": "GET",
@@ -18,7 +21,10 @@
       {
         "id": "fetch-w",
         "type": "fetchNode",
-        "position": { "x": 300, "y": 280 },
+        "position": {
+          "x": 300,
+          "y": 280
+        },
         "data": {
           "title": "OpenMeteo API",
           "method": "GET",
@@ -28,7 +34,10 @@
       {
         "id": "code-w",
         "type": "codeBlock",
-        "position": { "x": 260, "y": 500 },
+        "position": {
+          "x": 260,
+          "y": 500
+        },
         "data": {
           "title": "Format Data",
           "code": "const data = state['fetch-w'] || {};\nconst current = data.current_weather || {};\n\nlog('Parsed weather data for location');\n\nreturn {\n  city: 'Berlin',\n  temperatureCelsius: current.temperature,\n  windSpeedKmh: current.windspeed,\n  timestamp: current.time\n};"
@@ -37,7 +46,10 @@
       {
         "id": "resp-w",
         "type": "httpResponse",
-        "position": { "x": 300, "y": 760 },
+        "position": {
+          "x": 300,
+          "y": 760
+        },
         "data": {
           "title": "200 OK",
           "statusCode": 200,
@@ -75,5 +87,14 @@
       }
     ],
     "publishedAt": "2026-10-08T12:00:00.000Z"
+  },
+  {
+    "id": "test",
+    "title": "Test Flow",
+    "method": "GET",
+    "path": "/api/v1/test",
+    "nodes": [],
+    "edges": [],
+    "publishedAt": "2026-10-08T12:33:05.751Z"
   }
 ]
