@@ -23,9 +23,16 @@
 	} from '@lucide/svelte';
 	import { templatesData } from '../lib/templates';
 	import type { ManagedRoute } from '../lib/server/routeStore';
+	import type { PageData } from './$types';
 
-	let routes = $state<ManagedRoute[]>([]);
-	let isLoading = $state(true);
+	let { data }: { data: PageData } = $props();
+
+	// svelte-ignore state_referenced_locally
+	let routes = $state<ManagedRoute[]>(data?.routes && data.routes.length > 0 ? [...data.routes] : []);
+	// svelte-ignore state_referenced_locally
+	let isLoading = $state(!data?.routes || data.routes.length === 0);
+	let updatingRouteId = $state<string | null>(null);
+	let updatingAction = $state<'publishing' | 'unpublishing' | null>(null);
 	let searchQuery = $state('');
 	let selectedMethod = $state<string>('ALL');
 	let selectedStatus = $state<'ALL' | 'LIVE' | 'DRAFT'>('ALL');
@@ -58,8 +65,8 @@
 		try {
 			const res = await fetch('/api/routes');
 			if (res.ok) {
-				const data = await res.json();
-				routes = data.routes || [];
+				const resData = await res.json();
+				routes = resData.routes || [];
 			}
 		} catch (e) {
 			console.error('Failed to load routes:', e);
@@ -109,6 +116,11 @@
 
 	async function togglePublish(route: ManagedRoute, event: MouseEvent) {
 		event.stopPropagation();
+		if (updatingRouteId) return;
+
+		updatingRouteId = route.id;
+		updatingAction = route.isPublished ? 'unpublishing' : 'publishing';
+
 		try {
 			const res = await fetch(`/api/routes/${route.id}`, {
 				method: 'PATCH',
@@ -116,11 +128,16 @@
 				body: JSON.stringify({ isPublished: !route.isPublished })
 			});
 			if (res.ok) {
-				const data = await res.json();
-				routes = routes.map((r) => (r.id === route.id ? data.route : r));
+				const resData = await res.json();
+				routes = routes.map((r) => (r.id === route.id ? resData.route : r));
+			} else {
+				console.error('Failed to toggle publish status:', await res.text());
 			}
 		} catch (e) {
 			console.error('Failed to toggle publish:', e);
+		} finally {
+			updatingRouteId = null;
+			updatingAction = null;
 		}
 	}
 
@@ -310,7 +327,7 @@
 					<span
 						class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 					>
-						v0.2.0
+						v0.2.1
 					</span>
 				</div>
 				<p class="text-xs text-slate-400">Visual API Builder & Endpoint Manager</p>
@@ -319,6 +336,13 @@
 
 		<!-- Right: Action Buttons -->
 		<div class="flex items-center gap-3">
+			{#if isLoading && routes.length > 0}
+				<div class="flex items-center gap-1.5 rounded-full bg-blue-500/10 px-2.5 py-1 text-[11px] font-medium text-blue-400 border border-blue-500/20 animate-pulse">
+					<RefreshCw class="h-3 w-3 animate-spin" />
+					<span>Syncing...</span>
+				</div>
+			{/if}
+
 			<button
 				type="button"
 				onclick={loadRoutes}
@@ -462,11 +486,48 @@
 		<!-- Routes Grid -->
 		{#if filteredRoutes.length > 0}
 			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-				{#each filteredRoutes as route}
+				{#each filteredRoutes as route (route.id)}
+					{@const isUpdatingThisCard = updatingRouteId === route.id}
 					{@const nodeTypes = getNodeSummary(route.nodes || [])}
 					<div
-						class="group relative flex flex-col justify-between rounded-2xl border border-slate-800/90 bg-slate-900/50 p-5 shadow-lg backdrop-blur-xl transition-all duration-200 hover:border-slate-700 hover:bg-slate-900/80 hover:shadow-2xl"
+						class="group relative flex flex-col justify-between rounded-2xl border bg-slate-900/50 p-5 shadow-lg backdrop-blur-xl transition-all duration-200 overflow-hidden {isUpdatingThisCard
+							? 'border-blue-500/50 ring-2 ring-blue-500/30'
+							: 'border-slate-800/90 hover:border-slate-700 hover:bg-slate-900/80 hover:shadow-2xl'}"
 					>
+						{#if isUpdatingThisCard}
+							<!-- Isolated Per-Card Loading Overlay -->
+							<div
+								class="absolute inset-0 z-30 flex flex-col items-center justify-center bg-slate-950/95 p-6 text-center backdrop-blur-md animate-in fade-in duration-150"
+							>
+								<div class="relative flex items-center justify-center mb-3">
+									<span
+										class="absolute inline-flex h-10 w-10 rounded-full {updatingAction === 'publishing'
+											? 'bg-emerald-500/20'
+											: 'bg-amber-500/20'} animate-ping opacity-75"
+									></span>
+									<span
+										class="inline-block h-8 w-8 animate-spin rounded-full border-2 {updatingAction === 'publishing'
+											? 'border-emerald-400'
+											: 'border-amber-400'} border-t-transparent shadow-lg"
+									></span>
+								</div>
+
+								<div class="text-sm font-bold text-white">
+									{updatingAction === 'publishing' ? 'Hosting Endpoint Live...' : 'Taking Endpoint Down...'}
+								</div>
+
+								<div class="mt-2 inline-block max-w-[90%] truncate rounded-md bg-slate-900 px-2.5 py-1 font-mono text-[11px] text-slate-300 border border-slate-800 shadow-inner">
+									{route.path}
+								</div>
+
+								<p class="mt-2 text-[10px] text-slate-400 max-w-[85%] leading-relaxed">
+									{updatingAction === 'publishing'
+										? 'Registering route on public gateway & syncing state...'
+										: 'De-registering route and revoking public gateway access...'}
+								</p>
+							</div>
+						{/if}
+
 						<!-- Top: Badges & Status -->
 						<div>
 							<div class="flex items-center justify-between gap-2">
@@ -499,7 +560,8 @@
 								<button
 									type="button"
 									onclick={() => copyToClipboard(route.path, route.id)}
-									class="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-mono text-slate-400 hover:bg-slate-800 hover:text-white transition"
+									disabled={isUpdatingThisCard}
+									class="flex items-center gap-1 rounded-lg px-2 py-1 text-[11px] font-mono text-slate-400 hover:bg-slate-800 hover:text-white transition disabled:opacity-40"
 									title="Copy full endpoint URL"
 								>
 									{#if copiedPath === route.id}
@@ -550,7 +612,8 @@
 								<button
 									type="button"
 									onclick={(e) => openTestModal(route, e)}
-									class="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition"
+									disabled={isUpdatingThisCard}
+									class="flex items-center gap-1 rounded-lg border border-slate-800 bg-slate-900/60 px-2.5 py-1.5 text-xs font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition disabled:opacity-40"
 									title="Test API or view cURL"
 								>
 									<Terminal class="h-3.5 w-3.5 text-indigo-400" />
@@ -561,7 +624,8 @@
 								<button
 									type="button"
 									onclick={(e) => togglePublish(route, e)}
-									class="flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition {route.isPublished
+									disabled={isUpdatingThisCard}
+									class="flex items-center gap-1 rounded-lg border px-2.5 py-1.5 text-xs font-medium transition disabled:opacity-40 {route.isPublished
 										? 'border-emerald-500/30 bg-emerald-950/20 text-emerald-300 hover:bg-emerald-900/40'
 										: 'border-slate-800 bg-slate-900/60 text-slate-400 hover:bg-slate-800 hover:text-emerald-400'}"
 									title={route.isPublished ? 'Unpublish endpoint' : 'Host endpoint live'}
@@ -574,7 +638,8 @@
 								<button
 									type="button"
 									onclick={(e) => confirmDelete(route, e)}
-									class="rounded-lg p-1.5 text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition"
+									disabled={isUpdatingThisCard}
+									class="rounded-lg p-1.5 text-slate-500 hover:bg-rose-500/10 hover:text-rose-400 transition disabled:opacity-40"
 									title="Delete route"
 								>
 									<Trash2 class="h-3.5 w-3.5" />
@@ -584,11 +649,34 @@
 							<!-- Open in Visual Builder -->
 							<a
 								href="/editor/{route.id}"
-								class="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-blue-900/30 transition active:scale-95"
+								class="flex items-center gap-1.5 rounded-xl bg-blue-600 hover:bg-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-md shadow-blue-900/30 transition active:scale-95 {isUpdatingThisCard
+									? 'pointer-events-none opacity-40'
+									: ''}"
 							>
 								<span>Edit</span>
 								<ArrowRight class="h-3.5 w-3.5" />
 							</a>
+						</div>
+					</div>
+				{/each}
+			</div>
+		{:else if isLoading}
+			<!-- Initial Skeleton Loading Cards -->
+			<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+				{#each [1, 2, 3] as _}
+					<div class="rounded-2xl border border-slate-800/80 bg-slate-900/30 p-5 space-y-4 animate-pulse">
+						<div class="flex items-center justify-between">
+							<div class="h-5 w-14 bg-slate-800 rounded-lg"></div>
+							<div class="h-5 w-16 bg-slate-800 rounded-full"></div>
+						</div>
+						<div class="space-y-2 pt-2">
+							<div class="h-5 w-3/4 bg-slate-800 rounded"></div>
+							<div class="h-3 w-5/6 bg-slate-800/70 rounded"></div>
+						</div>
+						<div class="h-8 bg-slate-950/80 rounded-xl"></div>
+						<div class="pt-4 border-t border-slate-800/60 flex justify-between items-center">
+							<div class="h-7 w-20 bg-slate-800 rounded-lg"></div>
+							<div class="h-7 w-16 bg-slate-800 rounded-xl"></div>
 						</div>
 					</div>
 				{/each}

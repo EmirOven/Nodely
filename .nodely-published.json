@@ -9,95 +9,6 @@
     "publishedAt": "2026-10-08T12:33:05.751Z"
   },
   {
-    "id": "weather-api",
-    "title": "Weather Data Aggregator",
-    "method": "GET",
-    "path": "/api/v1/weather",
-    "nodes": [
-      {
-        "id": "trigger-w",
-        "type": "httpTrigger",
-        "position": {
-          "x": 300,
-          "y": 50
-        },
-        "data": {
-          "title": "Weather Query",
-          "method": "GET",
-          "path": "/api/v1/weather"
-        }
-      },
-      {
-        "id": "fetch-w",
-        "type": "fetchNode",
-        "position": {
-          "x": 300,
-          "y": 320
-        },
-        "data": {
-          "title": "OpenMeteo API",
-          "method": "GET",
-          "url": "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true"
-        }
-      },
-      {
-        "id": "code-w",
-        "type": "codeBlock",
-        "position": {
-          "x": 270,
-          "y": 560
-        },
-        "data": {
-          "title": "Format Data",
-          "code": "const data = state['fetch-w'] || {};\nconst current = data.current_weather || {};\n\nlog('Parsed weather data for location');\n\nreturn {\n  city: 'Berlin',\n  temperatureCelsius: current.temperature,\n  windSpeedKmh: current.windspeed,\n  timestamp: current.time\n};"
-        }
-      },
-      {
-        "id": "resp-w",
-        "type": "httpResponse",
-        "position": {
-          "x": 300,
-          "y": 920
-        },
-        "data": {
-          "title": "200 OK",
-          "statusCode": 200,
-          "bodyExpression": "state.lastResult"
-        }
-      }
-    ],
-    "edges": [
-      {
-        "id": "ew1-2",
-        "source": "trigger-w",
-        "target": "fetch-w",
-        "sourceHandle": "output",
-        "targetHandle": "input",
-        "animated": true,
-        "style": "stroke: #06b6d4; stroke-width: 2px;"
-      },
-      {
-        "id": "ew2-3",
-        "source": "fetch-w",
-        "target": "code-w",
-        "sourceHandle": "output",
-        "targetHandle": "input",
-        "animated": true,
-        "style": "stroke: #6366f1; stroke-width: 2px;"
-      },
-      {
-        "id": "ew3-4",
-        "source": "code-w",
-        "target": "resp-w",
-        "sourceHandle": "output",
-        "targetHandle": "input",
-        "animated": true,
-        "style": "stroke: #10b981; stroke-width: 2px;"
-      }
-    ],
-    "publishedAt": "2026-10-08T13:24:34.179Z"
-  },
-  {
     "id": "user-auth",
     "title": "User Registration & Auth",
     "method": "POST",
@@ -230,5 +141,94 @@
       }
     ],
     "publishedAt": "2026-10-08T13:23:06.081Z"
+  },
+  {
+    "id": "weather-api",
+    "title": "Weather Data Aggregator",
+    "method": "GET",
+    "path": "/api/v1/weather",
+    "nodes": [
+      {
+        "id": "trigger-w",
+        "type": "httpTrigger",
+        "position": {
+          "x": 300,
+          "y": 50
+        },
+        "data": {
+          "title": "Weather Query",
+          "method": "GET",
+          "path": "/api/v1/weather"
+        }
+      },
+      {
+        "id": "fetch-w",
+        "type": "fetchNode",
+        "position": {
+          "x": 300,
+          "y": 320
+        },
+        "data": {
+          "title": "OpenMeteo API",
+          "method": "GET",
+          "url": "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true"
+        }
+      },
+      {
+        "id": "code-w",
+        "type": "codeBlock",
+        "position": {
+          "x": 270,
+          "y": 560
+        },
+        "data": {
+          "title": "Format Data",
+          "code": "const data = state['fetch-w'] || {};\nconst current = data.current_weather || {};\n\nlog('Parsed weather data for location');\n\nreturn {\n  city: 'Berlin',\n  temperatureCelsius: current.temperature,\n  windSpeedKmh: current.windspeed,\n  timestamp: current.time\n};"
+        }
+      },
+      {
+        "id": "resp-w",
+        "type": "httpResponse",
+        "position": {
+          "x": 300,
+          "y": 920
+        },
+        "data": {
+          "title": "200 OK",
+          "statusCode": 200,
+          "bodyExpression": "state.lastResult"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "ew1-2",
+        "source": "trigger-w",
+        "target": "fetch-w",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #06b6d4; stroke-width: 2px;"
+      },
+      {
+        "id": "ew2-3",
+        "source": "fetch-w",
+        "target": "code-w",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #6366f1; stroke-width: 2px;"
+      },
+      {
+        "id": "ew3-4",
+        "source": "code-w",
+        "target": "resp-w",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #10b981; stroke-width: 2px;"
+      }
+    ],
+    "publishedAt": "2026-10-08T13:27:47.181Z"
   }
 ]

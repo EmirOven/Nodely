@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.1] - 2026-10-08
+
+### Fixed
+- **Dev Server Refresh on Publish/Take Down**:
+  - Configured Vite's file watcher (`vite.config.ts`) with `server.watch.ignored: ['**/.nodely*.json', '**/.nodely*/**', '**/build/**']`.
+  - Writing route state and published configurations to disk (`.nodely-routes.json`, `.nodely-published.json`) no longer triggers HMR page reloads or dependency re-bundling.
+
+### Added
+- **Per-Card Isolated Loading State**:
+  - When toggling an endpoint between Live and Draft, only the targeted project card transitions into an isolated loading state with smooth backdrop blur and animated status radar.
+  - Distinct contextual action feedback: "Hosting Endpoint Live..." (emerald spinner) or "Taking Endpoint Down..." (amber spinner).
+  - All other project cards remain completely visible, interactable, and unaffected.
+- **Route Pre-Hydration & Skeleton States**:
+  - Implemented `src/routes/+page.ts` SvelteKit load function to pre-hydrate routes during SSR/navigation, eliminating blank flashes.
+  - Added skeleton loading cards for initial loads without cached data.
+  - Added non-intrusive background sync badge in the top navigation header during manual or background refreshes.
+
+### Changed
+- Bumped project version to `0.2.1` in `package.json`, navbar badges, and dashboard headers.
+
+---
+
 ## [0.2.0] - 2026-10-08
 
 ### Added
