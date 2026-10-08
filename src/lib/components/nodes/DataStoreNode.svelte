@@ -13,6 +13,7 @@
 
 <BaseNode
 	{id}
+	nodeType="dataStore"
 	{selected}
 	title={storeData.title || 'Data Store'}
 	icon={Database}

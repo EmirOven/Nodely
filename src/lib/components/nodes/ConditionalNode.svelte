@@ -12,6 +12,7 @@
 
 <BaseNode
 	{id}
+	nodeType="conditional"
 	{selected}
 	title={condData.title || 'Condition'}
 	icon={GitFork}

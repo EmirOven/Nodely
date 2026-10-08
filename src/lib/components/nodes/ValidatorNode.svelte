@@ -12,6 +12,7 @@
 
 <BaseNode
 	{id}
+	nodeType="validatorNode"
 	{selected}
 	title={valData.title || 'Schema Validator'}
 	icon={ListChecks}

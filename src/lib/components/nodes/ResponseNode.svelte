@@ -26,6 +26,7 @@
 
 <BaseNode
 	{id}
+	nodeType="httpResponse"
 	{selected}
 	title={respData.title || 'HTTP Response'}
 	icon={CheckCheck}

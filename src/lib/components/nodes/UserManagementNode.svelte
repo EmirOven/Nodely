@@ -27,6 +27,7 @@
 
 <BaseNode
 	{id}
+	nodeType="userManagementNode"
 	{selected}
 	title={userMgmtData.title || 'User Management'}
 	accentColor="indigo"

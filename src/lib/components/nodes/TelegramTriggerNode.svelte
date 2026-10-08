@@ -16,6 +16,7 @@
 
 <BaseNode
 	{id}
+	nodeType="telegramTrigger"
 	{selected}
 	title={triggerData.title || 'Telegram Bot Trigger'}
 	icon={TelegramIcon}

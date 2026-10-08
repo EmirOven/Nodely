@@ -117,6 +117,7 @@
 
 <BaseNode
 	{id}
+	nodeType="httpTrigger"
 	{selected}
 	title={triggerData.title || 'HTTP Trigger'}
 	editableTitle={false}

@@ -20,6 +20,7 @@
 
 <BaseNode
 	{id}
+	nodeType="openAiNode"
 	{selected}
 	title={openAiData.title || 'OpenAI LLM'}
 	accentColor="emerald"

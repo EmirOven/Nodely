@@ -13,6 +13,7 @@
 
 <BaseNode
 	{id}
+	nodeType="fetchNode"
 	{selected}
 	title={fetchData.title || 'External API'}
 	icon={Send}

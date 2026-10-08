@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { Handle, Position, useSvelteFlow } from '@xyflow/svelte';
-	import { GripVertical, Trash2 } from '@lucide/svelte';
+	import { GripVertical, Trash2, Braces } from '@lucide/svelte';
 	import type { Component, Snippet } from 'svelte';
+	import { structureModal } from '../../stores/structureModal.svelte';
 
 	export interface OutputHandleConfig {
 		id: string;
@@ -25,6 +26,7 @@
 
 	interface Props {
 		id: string;
+		nodeType?: string;
 		selected?: boolean;
 		title?: string;
 		editableTitle?: boolean;
@@ -65,6 +67,7 @@
 
 	let {
 		id,
+		nodeType,
 		selected = false,
 		title = 'Node',
 		editableTitle = true,
@@ -100,7 +103,7 @@
 		footer
 	}: Props = $props();
 
-	const { deleteElements, updateNodeData, updateNode } = useSvelteFlow();
+	const { deleteElements, updateNodeData, updateNode, getNodes } = useSvelteFlow();
 
 	const accentThemes: Record<
 		AccentColor,
@@ -241,6 +244,36 @@
 
 	let nodeRootEl = $state<HTMLElement | null>(null);
 
+	function handleOpenStructureModal(e: MouseEvent) {
+		e.stopPropagation();
+		try {
+			const allNodes = getNodes();
+			const thisNode = allNodes.find((n) => n.id === id);
+			structureModal.open({
+				id,
+				type: thisNode?.type || nodeType || '',
+				title,
+				data: thisNode?.data as any,
+				accentColor,
+				badge,
+				hasInputHandle,
+				hasOutputHandle,
+				outputs
+			});
+		} catch {
+			structureModal.open({
+				id,
+				type: nodeType || '',
+				title,
+				accentColor,
+				badge,
+				hasInputHandle,
+				hasOutputHandle,
+				outputs
+			});
+		}
+	}
+
 	export function pullFocus() {
 		const nodeEl = nodeRootEl?.closest<HTMLElement>('.svelte-flow__node');
 		if (nodeEl) {
@@ -332,10 +365,20 @@
 				{@render headerActions()}
 			{/if}
 
+			<!-- Inspect Schema: Button to view Input & Output structure modal -->
+			<button
+				type="button"
+				class="nodrag nopan rounded p-1 text-slate-400 hover:bg-slate-700/60 hover:text-indigo-400 transition"
+				onclick={handleOpenStructureModal}
+				title="View Input & Output Data Structure"
+			>
+				<Braces class="h-3.5 w-3.5" />
+			</button>
+
 			{#if deletable}
 				<button
 					type="button"
-					class="rounded p-1 text-slate-400 hover:bg-slate-700/60 hover:text-rose-400 transition"
+					class="nodrag nopan rounded p-1 text-slate-400 hover:bg-slate-700/60 hover:text-rose-400 transition"
 					onclick={handleDelete}
 					title="Delete Node"
 				>

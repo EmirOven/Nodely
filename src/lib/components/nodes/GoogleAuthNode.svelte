@@ -12,6 +12,7 @@
 
 <BaseNode
 	{id}
+	nodeType="googleAuthNode"
 	{selected}
 	title={googleData.title || 'Google Auth'}
 	icon={GoogleIcon}

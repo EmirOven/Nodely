@@ -12,6 +12,7 @@
 
 <BaseNode
 	{id}
+	nodeType="authNode"
 	{selected}
 	title={authData.title || 'Auth Gate'}
 	icon={ShieldCheck}

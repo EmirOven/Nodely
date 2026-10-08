@@ -18,6 +18,7 @@
 
 <BaseNode
 	{id}
+	nodeType="telegramSendMessage"
 	{selected}
 	title={telegramData.title || 'Telegram Send Message'}
 	icon={TelegramIcon}

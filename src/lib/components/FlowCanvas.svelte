@@ -10,7 +10,7 @@
 		addEdge
 	} from '@xyflow/svelte';
 	import '@xyflow/svelte/dist/style.css';
-	import { Trash2, Copy, Layers } from '@lucide/svelte';
+	import { Trash2, Copy, Layers, Braces } from '@lucide/svelte';
 
 	import TriggerNode from './nodes/TriggerNode.svelte';
 	import CodeBlockNode from './nodes/CodeBlockNode.svelte';
@@ -33,6 +33,8 @@
 	import TestPanel from './TestPanel.svelte';
 	import ExportModal from './ExportModal.svelte';
 	import PublishModal from './PublishModal.svelte';
+	import NodeStructureModal from './NodeStructureModal.svelte';
+	import { structureModal } from '../stores/structureModal.svelte';
 
 	import { templatesData, type TemplateDefinition } from '../templates';
 	import DynamicExtensionNode from './nodes/DynamicExtensionNode.svelte';
@@ -855,6 +857,29 @@
 
 					<button
 						type="button"
+						onclick={() => {
+							const currentMenu = nodeContextMenu;
+							if (currentMenu) {
+								const targetNode = nodes.find((n) => n.id === currentMenu.nodeId);
+								if (targetNode) {
+									structureModal.open({
+										id: targetNode.id,
+										type: targetNode.type,
+										title: (targetNode.data as any)?.title || currentMenu.title,
+										data: targetNode.data as any
+									});
+								}
+								closeContextMenus();
+							}
+						}}
+						class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-indigo-300 hover:bg-slate-800 hover:text-white transition text-left"
+					>
+						<Braces class="h-3.5 w-3.5 text-indigo-400" />
+						<span>View Data Structure</span>
+					</button>
+
+					<button
+						type="button"
 						onclick={() => nodeContextMenu && duplicateNode(nodeContextMenu.nodeId)}
 						class="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs text-slate-300 hover:bg-slate-800 hover:text-white transition text-left"
 					>
@@ -899,6 +924,9 @@
 			onClose={() => (isPublishOpen = false)}
 			currentEndpoint={publishedEndpointInfo}
 		/>
+
+		<!-- Node Input & Output Data Structure Modal -->
+		<NodeStructureModal />
 	</div>
 </div>
 

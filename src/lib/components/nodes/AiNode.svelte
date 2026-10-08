@@ -46,6 +46,7 @@
 
 <BaseNode
 	{id}
+	nodeType="aiNode"
 	{selected}
 	title={aiData.title || 'AI Completion'}
 	accentColor="emerald"

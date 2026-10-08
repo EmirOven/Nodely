@@ -25,6 +25,7 @@
 
 <BaseNode
 	{id}
+	nodeType="codeBlock"
 	{selected}
 	title={codeData.title || 'Code Block'}
 	accentColor="indigo"

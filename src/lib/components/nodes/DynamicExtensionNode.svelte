@@ -30,6 +30,7 @@
 
 <BaseNode
 	{id}
+	nodeType={(data as any)?.nodeType || 'dynamicExtension'}
 	{selected}
 	title={nodeTitle}
 	{accentColor}

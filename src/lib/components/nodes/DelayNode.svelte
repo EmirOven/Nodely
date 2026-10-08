@@ -12,6 +12,7 @@
 
 <BaseNode
 	{id}
+	nodeType="delayNode"
 	{selected}
 	title={delayData.title || 'Delay / Sleep'}
 	icon={Clock}

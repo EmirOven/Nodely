@@ -1,6 +1,5 @@
 <script lang="ts">
 	import {
-		Network,
 		Play,
 		Code2,
 		FolderOpen,
@@ -121,17 +120,11 @@
 			</a>
 		</div>
 
-		<div
-			class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 shadow-md shadow-indigo-500/20 text-white"
-		>
-			<Network class="h-5 w-5" />
-		</div>
-
 		<div>
 			<div class="flex items-center gap-2">
 				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodeflow'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.5.3
+					v0.5.4
 				</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">
