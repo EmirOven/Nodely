@@ -216,7 +216,7 @@
 						<span
 							class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 						>
-							v0.4.0
+							v0.4.1
 						</span>
 					</div>
 					<p class="text-xs text-slate-400">AI Engine, OAuth Keys & Gateway Defaults</p>

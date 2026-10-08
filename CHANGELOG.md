@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.1] - 2026-10-08
+
+### Added
+- **Official Brand Favicon (`favicon.svg`)**:
+  - Rendered the official Nodely gradient brand icon (diagonal `#2563eb` -> `#6366f1` -> `#a855f7` squircle with centered white Lucide Network node glyph) as an SVG favicon.
+  - Linked brand favicon in `app.html` for the primary Nodely web dashboard and engine.
+  - Replaced landing site favicon (`Nodely-Landing/public/favicon.svg`) with the matching brand identity SVG.
+
+### Changed
+- Bumped application version to `0.4.1` across `package.json`, navbar badges, and dashboard headers.
+
+---
+
 ## [0.4.0] - 2026-10-08
 
 ### Added
