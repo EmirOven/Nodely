@@ -26,7 +26,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'code-1',
 				type: 'codeBlock',
-				position: { x: 260, y: 280 },
+				position: { x: 260, y: 340 },
 				data: {
 					title: 'Validate & Hash',
 					code: `// Validate payload\nconst errors = [];\nif (!payload.email || !payload.email.includes('@')) {\n  errors.push('Valid email is required');\n}\nif (!payload.password || payload.password.length < 6) {\n  errors.push('Password must be at least 6 characters');\n}\n\nlog('Validation checked. Errors count: ' + errors.length);\n\nconst isValid = errors.length === 0;\nconst userId = 'usr_' + Math.random().toString(36).substring(2, 9);\n\nreturn {\n  isValid,\n  errors,\n  user: isValid ? {\n    id: userId,\n    name: payload.name || 'Anonymous',\n    email: payload.email,\n    role: payload.role || 'member',\n    createdAt: new Date().toISOString()\n  } : null\n};`
@@ -35,7 +35,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'cond-1',
 				type: 'conditional',
-				position: { x: 300, y: 540 },
+				position: { x: 300, y: 680 },
 				data: {
 					title: 'Check Validity',
 					expression: 'payload.isValid === true'
@@ -44,7 +44,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'store-1',
 				type: 'dataStore',
-				position: { x: 100, y: 760 },
+				position: { x: 80, y: 980 },
 				data: {
 					title: 'Save New User',
 					operation: 'set',
@@ -56,7 +56,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'resp-success',
 				type: 'httpResponse',
-				position: { x: 100, y: 1020 },
+				position: { x: 80, y: 1320 },
 				data: {
 					title: '201 Created',
 					statusCode: 201,
@@ -66,7 +66,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'resp-error',
 				type: 'httpResponse',
-				position: { x: 520, y: 760 },
+				position: { x: 520, y: 980 },
 				data: {
 					title: '400 Bad Request',
 					statusCode: 400,
@@ -151,7 +151,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'fetch-w',
 				type: 'fetchNode',
-				position: { x: 300, y: 280 },
+				position: { x: 300, y: 320 },
 				data: {
 					title: 'OpenMeteo API',
 					method: 'GET',
@@ -161,7 +161,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'code-w',
 				type: 'codeBlock',
-				position: { x: 260, y: 500 },
+				position: { x: 270, y: 560 },
 				data: {
 					title: 'Format Data',
 					code: `const data = state['fetch-w'] || {};\nconst current = data.current_weather || {};\n\nlog('Parsed weather data for location');\n\nreturn {\n  city: 'Berlin',\n  temperatureCelsius: current.temperature,\n  windSpeedKmh: current.windspeed,\n  timestamp: current.time\n};`
@@ -170,7 +170,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'resp-w',
 				type: 'httpResponse',
-				position: { x: 300, y: 760 },
+				position: { x: 300, y: 920 },
 				data: {
 					title: '200 OK',
 					statusCode: 200,
@@ -228,7 +228,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'code-n',
 				type: 'codeBlock',
-				position: { x: 260, y: 280 },
+				position: { x: 270, y: 320 },
 				data: {
 					title: 'Attach Metadata',
 					code: `const noteId = 'note_' + Math.random().toString(36).substring(2, 7);\nlog('Generated note id: ' + noteId);\n\nreturn {\n  id: noteId,\n  title: payload.title || 'Untitled',\n  content: payload.content || '',\n  tags: payload.tags || [],\n  createdAt: new Date().toISOString()\n};`
@@ -237,7 +237,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'store-n',
 				type: 'dataStore',
-				position: { x: 300, y: 520 },
+				position: { x: 300, y: 660 },
 				data: {
 					title: 'Store Note',
 					operation: 'set',
@@ -249,7 +249,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'resp-n',
 				type: 'httpResponse',
-				position: { x: 300, y: 760 },
+				position: { x: 300, y: 1000 },
 				data: {
 					title: '201 Created',
 					statusCode: 201,
@@ -305,7 +305,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'trigger-empty',
 				type: 'httpTrigger',
-				position: { x: 320, y: 120 },
+				position: { x: 320, y: 100 },
 				data: {
 					title: 'HTTP Trigger',
 					method: 'GET',
@@ -315,7 +315,7 @@ export const templatesData: Record<string, TemplateDefinition> = {
 			{
 				id: 'resp-empty',
 				type: 'httpResponse',
-				position: { x: 320, y: 380 },
+				position: { x: 320, y: 400 },
 				data: {
 					title: '200 OK',
 					statusCode: 200,

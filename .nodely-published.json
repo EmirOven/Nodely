@@ -27,7 +27,7 @@
         "type": "fetchNode",
         "position": {
           "x": 300,
-          "y": 280
+          "y": 320
         },
         "data": {
           "title": "OpenMeteo API",
@@ -43,8 +43,8 @@
         "id": "code-w",
         "type": "codeBlock",
         "position": {
-          "x": 260,
-          "y": 500
+          "x": 270,
+          "y": 560
         },
         "data": {
           "title": "Format Data",
@@ -60,7 +60,7 @@
         "type": "httpResponse",
         "position": {
           "x": 300,
-          "y": 760
+          "y": 920
         },
         "data": {
           "title": "200 OK",
@@ -141,7 +141,7 @@
         "type": "codeBlock",
         "position": {
           "x": 260,
-          "y": 280
+          "y": 340
         },
         "data": {
           "title": "Validate & Hash",
@@ -157,7 +157,7 @@
         "type": "conditional",
         "position": {
           "x": 300,
-          "y": 540
+          "y": 680
         },
         "data": {
           "title": "Check Validity",
@@ -172,8 +172,8 @@
         "id": "store-1",
         "type": "dataStore",
         "position": {
-          "x": 100,
-          "y": 760
+          "x": 80,
+          "y": 980
         },
         "data": {
           "title": "Save New User",
@@ -191,8 +191,8 @@
         "id": "resp-success",
         "type": "httpResponse",
         "position": {
-          "x": 100,
-          "y": 1020
+          "x": 80,
+          "y": 1320
         },
         "data": {
           "title": "201 Created",
@@ -209,7 +209,7 @@
         "type": "httpResponse",
         "position": {
           "x": 520,
-          "y": 760
+          "y": 980
         },
         "data": {
           "title": "400 Bad Request",

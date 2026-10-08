@@ -10,7 +10,10 @@
 		GripVertical,
 		Layers,
 		Search,
-		BookOpen
+		BookOpen,
+		ShieldCheck,
+		ListChecks,
+		Clock
 	} from '@lucide/svelte';
 	import type { NodelyNodeType } from '../types';
 
@@ -32,6 +35,22 @@
 			color: 'text-blue-400 bg-blue-500/10 border-blue-500/30 hover:border-blue-500/60'
 		},
 		{
+			type: 'authNode' as NodelyNodeType,
+			title: 'Auth Gate',
+			desc: 'Verify API keys or Bearer tokens with Valid/Invalid routes',
+			category: 'Security',
+			icon: ShieldCheck,
+			color: 'text-rose-400 bg-rose-500/10 border-rose-500/30 hover:border-rose-500/60'
+		},
+		{
+			type: 'validatorNode' as NodelyNodeType,
+			title: 'Schema Validator',
+			desc: 'Check required payload fields and reject malformed requests',
+			category: 'Validation',
+			icon: ListChecks,
+			color: 'text-teal-400 bg-teal-500/10 border-teal-500/30 hover:border-teal-500/60'
+		},
+		{
 			type: 'codeBlock' as NodelyNodeType,
 			title: 'Code Block',
 			desc: 'Execute custom JS/TS to transform payload or compute logic',
@@ -46,6 +65,14 @@
 			category: 'Logic',
 			icon: GitFork,
 			color: 'text-amber-400 bg-amber-500/10 border-amber-500/30 hover:border-amber-500/60'
+		},
+		{
+			type: 'delayNode' as NodelyNodeType,
+			title: 'Delay / Sleep',
+			desc: 'Pause pipeline execution asynchronously (rate limit / pacing)',
+			category: 'Utilities',
+			icon: Clock,
+			color: 'text-yellow-400 bg-yellow-500/10 border-yellow-500/30 hover:border-yellow-500/60'
 		},
 		{
 			type: 'fetchNode' as NodelyNodeType,

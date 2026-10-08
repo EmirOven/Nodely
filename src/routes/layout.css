@@ -31,3 +31,32 @@
 ::-webkit-scrollbar-thumb:hover {
 	background: #475569;
 }
+
+/* SvelteFlow Edge & Connectionline Styling */
+:root {
+	--xy-edge-stroke-default: #6366f1;
+	--xy-edge-stroke-width-default: 2px;
+	--xy-connectionline-stroke-default: #6366f1;
+	--xy-connectionline-stroke-width-default: 2px;
+}
+
+.svelte-flow__connection-path {
+	stroke: #6366f1 !important;
+	stroke-width: 2px !important;
+	stroke-dasharray: 5 5 !important;
+}
+
+.svelte-flow__edge.animated path.svelte-flow__edge-path {
+	stroke-dasharray: 5 5 !important;
+	animation: dashdraw 0.6s linear infinite !important;
+}
+
+@keyframes dashdraw {
+	from {
+		stroke-dashoffset: 10;
+	}
+	to {
+		stroke-dashoffset: 0;
+	}
+}
+

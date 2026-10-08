@@ -18,6 +18,9 @@
 	import FetchNode from './nodes/FetchNode.svelte';
 	import DataStoreNode from './nodes/DataStoreNode.svelte';
 	import ResponseNode from './nodes/ResponseNode.svelte';
+	import AuthNode from './nodes/AuthNode.svelte';
+	import ValidatorNode from './nodes/ValidatorNode.svelte';
+	import DelayNode from './nodes/DelayNode.svelte';
 
 	import Navbar from './Navbar.svelte';
 	import Sidebar from './Sidebar.svelte';
@@ -36,7 +39,10 @@
 		conditional: ConditionalNode,
 		fetchNode: FetchNode,
 		dataStore: DataStoreNode,
-		httpResponse: ResponseNode
+		httpResponse: ResponseNode,
+		authNode: AuthNode,
+		validatorNode: ValidatorNode,
+		delayNode: DelayNode
 	};
 
 	let currentTemplateId = $state('user-auth');
@@ -84,21 +90,61 @@
 
 	const { screenToFlowPosition, fitView } = useSvelteFlow();
 
-	function handleConnect(connection: Connection) {
+	function getEdgeStyleForHandle(handleId?: string | null): string {
+		if (handleId === 'false' || handleId === 'invalid') {
+			return 'stroke: #ef4444; stroke-width: 2.5px;';
+		}
+		if (handleId === 'true' || handleId === 'valid') {
+			return 'stroke: #10b981; stroke-width: 2.5px;';
+		}
+		return 'stroke: #6366f1; stroke-width: 2px;';
+	}
+
+	function handleBeforeConnect(connection: Connection): Edge {
+		const style = getEdgeStyleForHandle(connection.sourceHandle);
 		const newEdge: Edge = {
 			...connection,
 			id: `e_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
 			animated: true,
 			selectable: true,
 			interactionWidth: 30,
-			style:
-				connection.sourceHandle === 'false'
-					? 'stroke: #ef4444; stroke-width: 2.5px;'
-					: connection.sourceHandle === 'true'
-						? 'stroke: #10b981; stroke-width: 2.5px;'
-						: 'stroke: #6366f1; stroke-width: 2px;'
+			style
 		};
-		edges = addEdge(newEdge, edges);
+		return newEdge;
+	}
+
+	function handleConnect(connection: Connection) {
+		const expectedStyle = getEdgeStyleForHandle(connection.sourceHandle);
+		const existingIdx = edges.findIndex(
+			(e) => e.source === connection.source && e.target === connection.target
+		);
+
+		if (existingIdx !== -1) {
+			const existing = edges[existingIdx];
+			if (!existing.style || !existing.animated) {
+				edges = edges.map((e, idx) =>
+					idx === existingIdx
+						? {
+								...e,
+								animated: true,
+								selectable: true,
+								interactionWidth: 30,
+								style: e.style || expectedStyle
+							}
+						: e
+				);
+			}
+		} else {
+			const newEdge: Edge = {
+				...connection,
+				id: `e_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+				animated: true,
+				selectable: true,
+				interactionWidth: 30,
+				style: expectedStyle
+			};
+			edges = addEdge(newEdge, edges);
+		}
 	}
 
 	function handleEdgeContextMenu(params: { edge: Edge; event: MouseEvent }) {
@@ -199,6 +245,26 @@
 					title: 'Send Response',
 					statusCode: 200,
 					bodyExpression: 'state.lastResult || payload'
+				};
+				break;
+			case 'authNode':
+				data = {
+					title: 'Auth Gate',
+					authType: 'apiKey',
+					headerName: 'x-api-key',
+					expectedValue: 'secret_nodely_key'
+				};
+				break;
+			case 'validatorNode':
+				data = {
+					title: 'Schema Validator',
+					requiredFields: 'email, password'
+				};
+				break;
+			case 'delayNode':
+				data = {
+					title: 'Delay / Sleep',
+					delayMs: 500
 				};
 				break;
 		}
@@ -354,9 +420,17 @@
 				bind:nodes
 				bind:edges
 				{nodeTypes}
+				onbeforeconnect={handleBeforeConnect}
 				onconnect={handleConnect}
 				onedgecontextmenu={handleEdgeContextMenu}
 				onnodecontextmenu={handleNodeContextMenu}
+				defaultEdgeOptions={{
+					animated: true,
+					selectable: true,
+					interactionWidth: 30,
+					style: 'stroke: #6366f1; stroke-width: 2px;'
+				}}
+				connectionLineStyle="stroke: #6366f1; stroke-width: 2px; stroke-dasharray: 5 5;"
 				deleteKey={['Backspace', 'Delete']}
 				elementsSelectable={true}
 				fitView

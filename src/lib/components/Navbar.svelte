@@ -55,7 +55,7 @@
 			<div class="flex items-center gap-2">
 				<h1 class="text-base font-bold tracking-tight text-white">Nodely</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.1 Svelte 5
+					v0.1.0
 				</span>
 			</div>
 			<p class="text-[11px] text-slate-400">Drag & Drop API Visual Builder</p>

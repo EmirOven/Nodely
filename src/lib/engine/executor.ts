@@ -9,7 +9,10 @@ import type {
 	ConditionalData,
 	FetchNodeData,
 	DataStoreData,
-	HttpResponseData
+	HttpResponseData,
+	AuthNodeData,
+	ValidatorData,
+	DelayData
 } from '../types';
 
 // Global in-memory storage for simulated database
@@ -251,6 +254,90 @@ export async function executeFlow(
 					state.lastResult = stepOutput;
 					addLog(currentId, nodeTitle, 'info', `Store LIST "${collection}" (${stepOutput.length} items)`);
 				}
+				nextHandleOut = 'output';
+			} else if (nodeType === 'authNode') {
+				const authData = nodeData as unknown as AuthNodeData;
+				const headerKey = (authData.headerName || (authData.authType === 'bearer' ? 'authorization' : 'x-api-key')).toLowerCase();
+				const expected = (authData.expectedValue || '').trim();
+				const reqHeaderVal = (req.headers[headerKey] || req.headers[headerKey.toUpperCase()] || '') as string;
+				let isAuthed = false;
+
+				if (authData.authType === 'bearer') {
+					const match = reqHeaderVal.match(/^Bearer\s+(.*)$/i);
+					const token = match ? match[1].trim() : reqHeaderVal.trim();
+					isAuthed = Boolean(expected && token === expected);
+				} else {
+					isAuthed = Boolean(expected && reqHeaderVal === expected);
+				}
+
+				nextHandleOut = isAuthed ? 'valid' : 'invalid';
+				stepOutput = {
+					authenticated: isAuthed,
+					headerChecked: headerKey,
+					authType: authData.authType || 'apiKey',
+					branchTaken: nextHandleOut
+				};
+				state[currentId] = stepOutput;
+				state.lastResult = stepOutput;
+
+				if (!isAuthed && typeof payload === 'object' && payload !== null) {
+					payload.authError = 'Unauthorized request: missing or invalid credentials';
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					isAuthed ? 'info' : 'warn',
+					`Auth Gate check: ${isAuthed ? 'PASSED (Authorized)' : 'FAILED (Unauthorized)'}. Routing to "${nextHandleOut}" branch.`
+				);
+			} else if (nodeType === 'validatorNode') {
+				const valData = nodeData as unknown as ValidatorData;
+				const requiredKeys = (valData.requiredFields || '')
+					.split(',')
+					.map((k: string) => k.trim())
+					.filter(Boolean);
+
+				const missingKeys: string[] = [];
+				for (const key of requiredKeys) {
+					const val = payload && typeof payload === 'object' ? payload[key] : undefined;
+					if (val === undefined || val === null || val === '') {
+						missingKeys.push(key);
+					}
+				}
+
+				const isValid = missingKeys.length === 0;
+				nextHandleOut = isValid ? 'valid' : 'invalid';
+				const validationResult = {
+					isValid,
+					required: requiredKeys,
+					missing: missingKeys,
+					branchTaken: nextHandleOut
+				};
+
+				stepOutput = validationResult;
+				state[currentId] = validationResult;
+				state.lastResult = validationResult;
+
+				if (!isValid && typeof payload === 'object' && payload !== null) {
+					payload.validationErrors = missingKeys.map((k: string) => `Field '${k}' is required and cannot be empty`);
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					isValid ? 'info' : 'warn',
+					`Validation check: ${isValid ? 'PASSED' : 'FAILED'} (missing: [${missingKeys.join(', ')}]). Routing to "${nextHandleOut}" branch.`
+				);
+			} else if (nodeType === 'delayNode') {
+				const delayData = nodeData as unknown as DelayData;
+				const delayMs = Math.min(Math.max(delayData.delayMs ?? 500, 0), 30000);
+				addLog(currentId, nodeTitle, 'info', `Sleeping execution for ${delayMs}ms...`);
+				if (delayMs > 0) {
+					await new Promise((resolve) => setTimeout(resolve, delayMs));
+				}
+				stepOutput = { delayedMs: delayMs, resumedAt: Date.now() };
+				state[currentId] = stepOutput;
+				state.lastResult = stepOutput;
 				nextHandleOut = 'output';
 			} else if (nodeType === 'httpResponse') {
 				const respData = nodeData as unknown as HttpResponseData;

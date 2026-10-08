@@ -52,13 +52,39 @@ export interface HttpResponseData {
 	isExecuting?: boolean;
 }
 
+export interface AuthNodeData {
+	title: string;
+	authType: 'apiKey' | 'bearer';
+	headerName: string;
+	expectedValue: string;
+	description?: string;
+	isExecuting?: boolean;
+}
+
+export interface ValidatorData {
+	title: string;
+	requiredFields: string;
+	description?: string;
+	isExecuting?: boolean;
+}
+
+export interface DelayData {
+	title: string;
+	delayMs: number;
+	description?: string;
+	isExecuting?: boolean;
+}
+
 export type NodelyNodeType =
 	| 'httpTrigger'
 	| 'codeBlock'
 	| 'conditional'
 	| 'fetchNode'
 	| 'dataStore'
-	| 'httpResponse';
+	| 'httpResponse'
+	| 'authNode'
+	| 'validatorNode'
+	| 'delayNode';
 
 export interface ExecutionLog {
 	nodeId: string;
