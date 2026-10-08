@@ -34,7 +34,7 @@ async function handlePublishedRequest(event: RequestEvent) {
 	}
 
 	// Extract request details
-	let requestBody: any = null;
+	let requestBody: any = {};
 	if (method !== 'GET' && method !== 'HEAD') {
 		try {
 			const text = await request.text();
@@ -46,7 +46,7 @@ async function handlePublishedRequest(event: RequestEvent) {
 				}
 			}
 		} catch {
-			requestBody = null;
+			requestBody = {};
 		}
 	}
 

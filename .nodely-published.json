@@ -1,7 +1,7 @@
 [
   {
     "id": "weather-api",
-    "title": "Weather Data Aggregator",
+    "title": "Weather Query",
     "method": "GET",
     "path": "/api/v1/weather",
     "nodes": [
@@ -16,6 +16,10 @@
           "title": "Weather Query",
           "method": "GET",
           "path": "/api/v1/weather"
+        },
+        "measured": {
+          "width": 320,
+          "height": 216
         }
       },
       {
@@ -29,6 +33,10 @@
           "title": "OpenMeteo API",
           "method": "GET",
           "url": "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true"
+        },
+        "measured": {
+          "width": 320,
+          "height": 173
         }
       },
       {
@@ -41,6 +49,10 @@
         "data": {
           "title": "Format Data",
           "code": "const data = state['fetch-w'] || {};\nconst current = data.current_weather || {};\n\nlog('Parsed weather data for location');\n\nreturn {\n  city: 'Berlin',\n  temperatureCelsius: current.temperature,\n  windSpeedKmh: current.windspeed,\n  timestamp: current.time\n};"
+        },
+        "measured": {
+          "width": 384,
+          "height": 263
         }
       },
       {
@@ -54,6 +66,10 @@
           "title": "200 OK",
           "statusCode": 200,
           "bodyExpression": "state.lastResult"
+        },
+        "measured": {
+          "width": 320,
+          "height": 283
         }
       }
     ],
@@ -86,7 +102,7 @@
         "style": "stroke: #10b981; stroke-width: 2px;"
       }
     ],
-    "publishedAt": "2026-10-08T12:00:00.000Z"
+    "publishedAt": "2026-10-08T12:37:22.555Z"
   },
   {
     "id": "test",

@@ -69,7 +69,9 @@ export async function executeFlow(
 
 	// Execution state
 	const state: Record<string, any> = {};
-	const payload = typeof request.body === 'object' && request.body !== null ? JSON.parse(JSON.stringify(request.body)) : request.body;
+	let payload = typeof request.body === 'object' && request.body !== null
+		? JSON.parse(JSON.stringify(request.body))
+		: (request.body !== undefined && request.body !== null ? request.body : {});
 	const req = {
 		method: request.method,
 		path: request.path,
@@ -140,7 +142,11 @@ export async function executeFlow(
 
 				// If returned an object with properties, update payload reference if suitable
 				if (result && typeof result === 'object' && !Array.isArray(result)) {
-					Object.assign(payload, result);
+					if (typeof payload === 'object' && payload !== null) {
+						Object.assign(payload, result);
+					} else {
+						payload = { ...result };
+					}
 				}
 
 				addLog(currentId, nodeTitle, 'info', `Code block completed successfully`, result);
