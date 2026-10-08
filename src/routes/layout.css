@@ -1,0 +1,33 @@
+@import 'tailwindcss';
+
+/* Modern Drag Guidance compliance */
+.drag-handle {
+	cursor: grab;
+	touch-action: none;
+	-webkit-user-select: none;
+	user-select: none;
+}
+
+.drag-handle.dragging,
+.drag-handle:active {
+	cursor: grabbing;
+}
+
+/* Custom dark scrollbars */
+::-webkit-scrollbar {
+	width: 6px;
+	height: 6px;
+}
+
+::-webkit-scrollbar-track {
+	background: #020617;
+}
+
+::-webkit-scrollbar-thumb {
+	background: #334155;
+	border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+	background: #475569;
+}
