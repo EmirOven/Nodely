@@ -35,25 +35,25 @@ A modern visual API builder created with **Svelte 5**, **SvelteKit**, **Tailwind
 
 ### 1. Install Dependencies
 ```bash
-npm install
+bun install
 ```
 
 ### 2. Start Development Server
 ```bash
-npm run dev
+bun run dev
 ```
 
 Visit [http://localhost:5173](http://localhost:5173) in your browser.
 
 ### 3. Build for Production
 ```bash
-npm run build
-npm run preview
+bun run build
+bun run preview
 ```
 
 ### 4. Run Type Diagnostics
 ```bash
-npm run check
+bun run check
 ```
 
 ---
