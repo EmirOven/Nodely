@@ -410,17 +410,17 @@
         },
         "measured": {
           "width": 336,
-          "height": 212
+          "height": 210
         },
-        "selected": true,
+        "selected": false,
         "dragging": false
       },
       {
         "id": "httpResponse_1791468710167",
         "type": "httpResponse",
         "position": {
-          "x": 283.96139081940606,
-          "y": 377.3538181371761
+          "x": 579.1298416992734,
+          "y": 683.9952476731514
         },
         "data": {
           "title": "Send Response",
@@ -433,15 +433,86 @@
         },
         "selected": false,
         "dragging": false
+      },
+      {
+        "id": "googleAuthNode_1791480410806",
+        "type": "googleAuthNode",
+        "position": {
+          "x": 436.93811521692567,
+          "y": 348.752583120877
+        },
+        "data": {
+          "title": "Google Auth",
+          "category": "Security",
+          "accentColor": "blue",
+          "icon": "ShieldCheck",
+          "properties": [
+            {
+              "name": "tokenSource",
+              "label": "Token Source",
+              "type": "select",
+              "defaultValue": "header",
+              "options": [
+                {
+                  "label": "Authorization Header",
+                  "value": "header"
+                },
+                {
+                  "label": "Request Payload Field",
+                  "value": "payload"
+                }
+              ]
+            },
+            {
+              "name": "tokenField",
+              "label": "Field Name",
+              "type": "text",
+              "defaultValue": "id_token"
+            }
+          ],
+          "outputs": [
+            {
+              "id": "valid",
+              "label": "VALID (200)",
+              "color": "emerald"
+            },
+            {
+              "id": "invalid",
+              "label": "INVALID (401)",
+              "color": "rose"
+            }
+          ],
+          "width": "w-80",
+          "tokenSource": "header",
+          "tokenField": "id_token"
+        },
+        "measured": {
+          "width": 320,
+          "height": 289
+        },
+        "selected": true,
+        "dragging": false
       }
     ],
     "edges": [
       {
-        "source": "trigger-1",
-        "sourceHandle": "output",
+        "source": "googleAuthNode_1791480410806",
+        "sourceHandle": "valid",
         "target": "httpResponse_1791468710167",
         "targetHandle": "input",
-        "id": "e_1791468712534_dmud",
+        "id": "e_1791480431749_in5j",
+        "animated": true,
+        "selectable": true,
+        "interactionWidth": 30,
+        "style": "stroke: #10b981; stroke-width: 2.5px;",
+        "selected": true
+      },
+      {
+        "source": "trigger-1",
+        "sourceHandle": "output",
+        "target": "googleAuthNode_1791480410806",
+        "targetHandle": "input",
+        "id": "e_1791480437405_gl4n",
         "animated": true,
         "selectable": true,
         "interactionWidth": 30,
@@ -450,7 +521,7 @@
     ],
     "isPublished": true,
     "createdAt": "2026-10-08T14:11:37.816Z",
-    "updatedAt": "2026-10-08T15:49:29.460Z",
-    "publishedAt": "2026-10-08T15:49:29.460Z"
+    "updatedAt": "2026-10-08T17:27:44.498Z",
+    "publishedAt": "2026-10-08T17:27:44.498Z"
   }
 ]

@@ -609,19 +609,18 @@
 		}
 	}
 
+	let lastElevatedNodeEl: HTMLElement | null = null;
+
 	function handleCanvasPointerDown(e: MouseEvent | TouchEvent) {
 		const target = e.target as HTMLElement | null;
 		if (!target) return;
-		const interactive = target.closest('select, button, [data-dropdown-trigger], [data-dropdown-open]');
 		const nodeEl = target.closest<HTMLElement>('.svelte-flow__node');
-		if (interactive && nodeEl) {
-			const nodeId = nodeEl.getAttribute('data-id');
-			if (nodeId) {
-				nodeEl.style.zIndex = '1000';
-				nodes = nodes.map((n) =>
-					n.id === nodeId ? { ...n, selected: true } : (e.shiftKey ? n : { ...n, selected: false })
-				);
+		if (nodeEl && nodeEl !== lastElevatedNodeEl) {
+			if (lastElevatedNodeEl && !lastElevatedNodeEl.matches(':focus-within, .selected, [data-dropdown-open="true"]')) {
+				lastElevatedNodeEl.style.zIndex = '';
 			}
+			nodeEl.style.zIndex = '1000';
+			lastElevatedNodeEl = nodeEl;
 		}
 	}
 
@@ -629,14 +628,12 @@
 		const target = e.target as HTMLElement | null;
 		if (!target) return;
 		const nodeEl = target.closest<HTMLElement>('.svelte-flow__node');
-		if (nodeEl) {
-			const nodeId = nodeEl.getAttribute('data-id');
-			if (nodeId) {
-				nodeEl.style.zIndex = '1000';
-				nodes = nodes.map((n) =>
-					n.id === nodeId ? { ...n, selected: true } : { ...n, selected: false }
-				);
+		if (nodeEl && nodeEl !== lastElevatedNodeEl) {
+			if (lastElevatedNodeEl && !lastElevatedNodeEl.matches(':focus-within, .selected, [data-dropdown-open="true"]')) {
+				lastElevatedNodeEl.style.zIndex = '';
 			}
+			nodeEl.style.zIndex = '1000';
+			lastElevatedNodeEl = nodeEl;
 		}
 	}
 

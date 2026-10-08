@@ -242,12 +242,8 @@
 	let nodeRootEl = $state<HTMLElement | null>(null);
 
 	export function pullFocus() {
-		try {
-			updateNode(id, { selected: true });
-		} catch {}
 		const nodeEl = nodeRootEl?.closest<HTMLElement>('.svelte-flow__node');
 		if (nodeEl) {
-			nodeEl.focus?.();
 			nodeEl.style.zIndex = '1000';
 		}
 	}
@@ -266,6 +262,7 @@
 	});
 </script>
 
+<!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <div
 	bind:this={nodeRootEl}
 	data-dropdown-open={dataDropdownOpen}
@@ -273,7 +270,12 @@
 		? theme.selectedBorder
 		: theme.border} {isExecuting ? 'ring-2 ring-blue-400 shadow-lg shadow-blue-500/20' : ''}"
 	onpointerdown={pullFocus}
-	onfocusin={pullFocus}
+	onkeydown={(e) => {
+		const target = e.target as HTMLElement | null;
+		if (target?.matches('input, textarea, select, [contenteditable="true"]')) {
+			e.stopPropagation();
+		}
+	}}
 	role="group"
 	aria-label="{title} node"
 >
@@ -304,9 +306,11 @@
 				<input
 					type="text"
 					aria-label="Node title"
-					class="bg-transparent text-xs font-semibold tracking-wide text-slate-200 uppercase outline-none focus:border-b focus:border-blue-400 truncate flex-1 min-w-0"
+					class="nodrag nopan bg-transparent text-xs font-semibold tracking-wide text-slate-200 uppercase outline-none focus:border-b focus:border-blue-400 truncate flex-1 min-w-0"
 					value={title}
 					oninput={handleTitleInput}
+					onpointerdown={(e) => e.stopPropagation()}
+					onkeydown={(e) => e.stopPropagation()}
 				/>
 			{:else}
 				<span class="text-xs font-semibold tracking-wide text-slate-200 uppercase truncate">
@@ -349,7 +353,7 @@
 	{/if}
 
 	<!-- Node Body Content -->
-	<div class="p-3 space-y-2.5">
+	<div class="p-3 space-y-2.5 nodrag nopan">
 		{@render children?.()}
 	</div>
 
