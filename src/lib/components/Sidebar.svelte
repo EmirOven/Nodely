@@ -13,8 +13,11 @@
 		BookOpen,
 		ShieldCheck,
 		ListChecks,
-		Clock
+		Clock,
+		Users,
+		Sparkles
 	} from '@lucide/svelte';
+	import GoogleIcon from './icons/GoogleIcon.svelte';
 	import type { NodelyNodeType } from '../types';
 
 	interface Props {
@@ -97,6 +100,30 @@
 			category: 'Outputs',
 			icon: CheckCheck,
 			color: 'text-purple-400 bg-purple-500/10 border-purple-500/30 hover:border-purple-500/60'
+		},
+		{
+			type: 'googleAuthNode' as NodelyNodeType,
+			title: 'Google OAuth',
+			desc: 'Verify Google ID tokens and extract authenticated user details',
+			category: 'Security',
+			icon: GoogleIcon,
+			color: 'text-red-400 bg-red-500/10 border-red-500/30 hover:border-red-500/60'
+		},
+		{
+			type: 'userManagementNode' as NodelyNodeType,
+			title: 'User Management',
+			desc: 'Supabase-style auth: Sign up, login, delete & manage project users',
+			category: 'Auth & Users',
+			icon: Users,
+			color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/30 hover:border-indigo-500/60'
+		},
+		{
+			type: 'openAiNode' as NodelyNodeType,
+			title: 'OpenAI Completion',
+			desc: 'Run LLM chat completions with custom system & user prompt templates',
+			category: 'AI & LLM',
+			icon: Sparkles,
+			color: 'text-emerald-400 bg-emerald-500/10 border-emerald-500/30 hover:border-emerald-500/60'
 		}
 	];
 

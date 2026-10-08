@@ -22,6 +22,8 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.nodely-settings.json
+.nodely-users.json
 
 # OS files
 .DS_Store

@@ -11,7 +11,9 @@
 		Globe,
 		ArrowLeft,
 		Save,
-		CheckCircle2
+		CheckCircle2,
+		Users,
+		Settings
 	} from '@lucide/svelte';
 
 	interface Props {
@@ -77,14 +79,32 @@
 >
 	<!-- Left: Brand & Route Navigation -->
 	<div class="flex items-center gap-3">
-		<a
-			href="/"
-			class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition group"
-			title="Back to All Routes Browser"
-		>
-			<ArrowLeft class="h-3.5 w-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
-			<span>Routes</span>
-		</a>
+		<div class="flex items-center gap-1 border-r border-slate-800 pr-2.5">
+			<a
+				href="/"
+				class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition group"
+				title="Back to All Routes Browser"
+			>
+				<ArrowLeft class="h-3.5 w-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
+				<span>Routes</span>
+			</a>
+			<a
+				href="/users"
+				class="flex items-center gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/60 px-2 py-1 text-xs font-medium text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition"
+				title="Project Users Directory"
+			>
+				<Users class="h-3.5 w-3.5 text-slate-400" />
+				<span class="hidden sm:inline">Users</span>
+			</a>
+			<a
+				href="/settings"
+				class="flex items-center gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/60 px-2 py-1 text-xs font-medium text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition"
+				title="Project Settings & Secrets"
+			>
+				<Settings class="h-3.5 w-3.5 text-slate-400" />
+				<span class="hidden sm:inline">Settings</span>
+			</a>
+		</div>
 
 		<div
 			class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 shadow-md shadow-indigo-500/20 text-white"
@@ -96,7 +116,7 @@
 			<div class="flex items-center gap-2">
 				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodely API'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.2.1
+					v0.3.0
 				</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">

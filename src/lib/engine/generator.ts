@@ -8,7 +8,10 @@ import type {
 	HttpResponseData,
 	AuthNodeData,
 	ValidatorData,
-	DelayData
+	DelayData,
+	GoogleAuthData,
+	UserManagementData,
+	OpenAiData
 } from '../types';
 
 export function generateSvelteKitCode(nodes: Node[], edges: Edge[]): string {
@@ -170,6 +173,48 @@ export const ${method}: RequestHandler = async ({ request, url }) => {
 			code += `\t\tawait new Promise((resolve) => setTimeout(resolve, ${delayData.delayMs || 500}));\n\n`;
 			stepNum++;
 			current = nodes.find((n: Node) => n.id === nextEdges[0]?.target);
+		} else if (current.type === 'googleAuthNode') {
+			const gData = nodeData as unknown as GoogleAuthData;
+			const validEdge = nextEdges.find((e: Edge) => e.sourceHandle === 'valid');
+			const invalidEdge = nextEdges.find((e: Edge) => e.sourceHandle === 'invalid');
+			const validNode = nodes.find((n: Node) => n.id === validEdge?.target);
+			const invalidNode = nodes.find((n: Node) => n.id === invalidEdge?.target);
+
+			code += `\t\t// ${stepNum}. Google OAuth Verification\n`;
+			code += `\t\tconst googleToken = ${gData.tokenSource === 'payload' ? `payload['${gData.tokenField || 'credential'}']` : `(headers['authorization'] || '').replace(/^Bearer\\s+/i, '')`};\n`;
+			code += `\t\tif (!googleToken) {\n`;
+			if (invalidNode && invalidNode.type === 'httpResponse') {
+				const respData = invalidNode.data as unknown as HttpResponseData;
+				code += `\t\t\treturn json(${respData.bodyExpression || '{ error: "Missing Google token" }'}, { status: ${respData.statusCode || 401} });\n`;
+			} else {
+				code += `\t\t\treturn json({ error: 'Missing or invalid Google token' }, { status: 401 });\n`;
+			}
+			code += `\t\t}\n`;
+			code += `\t\tstate.googleUser = { sub: 'google_user_id', email: 'verified@example.com' };\n\n`;
+			stepNum++;
+			current = validNode;
+		} else if (current.type === 'userManagementNode') {
+			const uData = nodeData as unknown as UserManagementData;
+			const action = uData.action || 'signup';
+			code += `\t\t// ${stepNum}. User Management (${action})\n`;
+			code += `\t\tstate.user = { id: 'usr_1', email: payload.email, role: '${uData.role || 'user'}' };\n`;
+			code += `\t\tstate.sessionToken = 'tok_' + Math.random().toString(36).substring(2);\n\n`;
+			stepNum++;
+			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
+		} else if (current.type === 'openAiNode') {
+			const aiData = nodeData as unknown as OpenAiData;
+			code += `\t\t// ${stepNum}. OpenAI Completion (${aiData.model || 'gpt-4o-mini'})\n`;
+			code += `\t\tconst openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {\n`;
+			code += `\t\t\tmethod: 'POST',\n`;
+			code += `\t\t\theaders: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${process.env.OPENAI_API_KEY}\` },\n`;
+			code += `\t\t\tbody: JSON.stringify({\n`;
+			code += `\t\t\t\tmodel: '${aiData.model || 'gpt-4o-mini'}',\n`;
+			code += `\t\t\t\tmessages: [{ role: 'system', content: '${(aiData.systemPrompt || '').replace(/'/g, "\\'")}' }, { role: 'user', content: String(payload.prompt || payload.text || '') }]\n`;
+			code += `\t\t\t})\n`;
+			code += `\t\t}).then((r) => r.json());\n`;
+			code += `\t\tstate.aiResponse = { text: openAiResponse.choices?.[0]?.message?.content };\n\n`;
+			stepNum++;
+			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
 		} else if (current.type === 'httpResponse') {
 			const respData = nodeData as HttpResponseData;
 			code += `\t\t// Final Response: HTTP ${respData.statusCode || 200}\n`;
@@ -261,6 +306,37 @@ app.${method}('${path}', async (req, res) => {
 			code += `\t\tawait new Promise((resolve) => setTimeout(resolve, ${delayData.delayMs || 500}));\n\n`;
 			stepNum++;
 			current = nodes.find((n: Node) => n.id === nextEdges[0]?.target);
+		} else if (current.type === 'googleAuthNode') {
+			const gData = nodeData as unknown as GoogleAuthData;
+			const validEdge = nextEdges.find((e: Edge) => e.sourceHandle === 'valid');
+			const validNode = nodes.find((n: Node) => n.id === validEdge?.target);
+			code += `\t\t// ${stepNum}. Google OAuth Verification\n`;
+			code += `\t\tconst googleToken = ${gData.tokenSource === 'payload' ? `req.body['${gData.tokenField || 'credential'}']` : `(req.headers['authorization'] || '').replace(/^Bearer\\s+/i, '')`};\n`;
+			code += `\t\tif (!googleToken) return res.status(401).json({ error: 'Missing Google token' });\n`;
+			code += `\t\tstate.googleUser = { sub: 'google_user_id', email: 'verified@example.com' };\n\n`;
+			stepNum++;
+			current = validNode;
+		} else if (current.type === 'userManagementNode') {
+			const uData = nodeData as unknown as UserManagementData;
+			code += `\t\t// ${stepNum}. User Management (${uData.action || 'signup'})\n`;
+			code += `\t\tstate.user = { id: 'usr_1', email: req.body.email, role: '${uData.role || 'user'}' };\n`;
+			code += `\t\tstate.sessionToken = 'tok_' + Math.random().toString(36).substring(2);\n\n`;
+			stepNum++;
+			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
+		} else if (current.type === 'openAiNode') {
+			const aiData = nodeData as unknown as OpenAiData;
+			code += `\t\t// ${stepNum}. OpenAI Completion (${aiData.model || 'gpt-4o-mini'})\n`;
+			code += `\t\tconst openAiResponse = await fetch('https://api.openai.com/v1/chat/completions', {\n`;
+			code += `\t\t\tmethod: 'POST',\n`;
+			code += `\t\t\theaders: { 'Content-Type': 'application/json', 'Authorization': \`Bearer \${process.env.OPENAI_API_KEY}\` },\n`;
+			code += `\t\t\tbody: JSON.stringify({\n`;
+			code += `\t\t\t\tmodel: '${aiData.model || 'gpt-4o-mini'}',\n`;
+			code += `\t\t\t\tmessages: [{ role: 'system', content: '${(aiData.systemPrompt || '').replace(/'/g, "\\'")}' }, { role: 'user', content: String(req.body.prompt || req.body.text || '') }]\n`;
+			code += `\t\t\t})\n`;
+			code += `\t\t}).then((r) => r.json());\n`;
+			code += `\t\tstate.aiResponse = { text: openAiResponse.choices?.[0]?.message?.content };\n\n`;
+			stepNum++;
+			current = nodes.find((n: Node) => n.id === nextEdges.find((e: Edge) => e.sourceHandle === 'success')?.target || nextEdges[0]?.target);
 		} else if (current.type === 'codeBlock') {
 			const blockData = nodeData as CodeBlockData;
 			code += `\t\t// ${stepNum}. Code Block: ${blockData.title || 'Transform'}\n`;

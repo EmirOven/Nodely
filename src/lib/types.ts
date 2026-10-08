@@ -75,6 +75,43 @@ export interface DelayData {
 	isExecuting?: boolean;
 }
 
+export interface GoogleAuthData {
+	title: string;
+	clientId?: string;
+	tokenSource: 'header' | 'payload';
+	tokenField: string;
+	description?: string;
+	isExecuting?: boolean;
+}
+
+export type UserActionType = 'signup' | 'login' | 'getUser' | 'updateUser' | 'deleteUser' | 'listUsers';
+
+export interface UserManagementData {
+	title: string;
+	action: UserActionType;
+	emailExpr?: string;
+	passwordExpr?: string;
+	nameExpr?: string;
+	userIdExpr?: string;
+	role?: string;
+	metadataExpr?: string;
+	description?: string;
+	isExecuting?: boolean;
+}
+
+export interface OpenAiData {
+	title: string;
+	model: 'gpt-4o-mini' | 'gpt-4o' | 'gpt-3.5-turbo' | 'o1-mini';
+	systemPrompt: string;
+	userPrompt: string;
+	temperature: number;
+	maxTokens: number;
+	responseFormat: 'text' | 'json_object';
+	apiKeyOverride?: string;
+	description?: string;
+	isExecuting?: boolean;
+}
+
 export type NodelyNodeType =
 	| 'httpTrigger'
 	| 'codeBlock'
@@ -84,7 +121,10 @@ export type NodelyNodeType =
 	| 'httpResponse'
 	| 'authNode'
 	| 'validatorNode'
-	| 'delayNode';
+	| 'delayNode'
+	| 'googleAuthNode'
+	| 'userManagementNode'
+	| 'openAiNode';
 
 export interface ExecutionLog {
 	nodeId: string;

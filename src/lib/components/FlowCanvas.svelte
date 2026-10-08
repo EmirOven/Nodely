@@ -21,6 +21,9 @@
 	import AuthNode from './nodes/AuthNode.svelte';
 	import ValidatorNode from './nodes/ValidatorNode.svelte';
 	import DelayNode from './nodes/DelayNode.svelte';
+	import GoogleAuthNode from './nodes/GoogleAuthNode.svelte';
+	import UserManagementNode from './nodes/UserManagementNode.svelte';
+	import OpenAiNode from './nodes/OpenAiNode.svelte';
 
 	import Navbar from './Navbar.svelte';
 	import Sidebar from './Sidebar.svelte';
@@ -42,7 +45,10 @@
 		httpResponse: ResponseNode,
 		authNode: AuthNode,
 		validatorNode: ValidatorNode,
-		delayNode: DelayNode
+		delayNode: DelayNode,
+		googleAuthNode: GoogleAuthNode,
+		userManagementNode: UserManagementNode,
+		openAiNode: OpenAiNode
 	};
 
 	interface Props {
@@ -137,10 +143,10 @@
 	const { screenToFlowPosition, fitView } = useSvelteFlow();
 
 	function getEdgeStyleForHandle(handleId?: string | null): string {
-		if (handleId === 'false' || handleId === 'invalid') {
+		if (handleId === 'false' || handleId === 'invalid' || handleId === 'error') {
 			return 'stroke: #ef4444; stroke-width: 2.5px;';
 		}
-		if (handleId === 'true' || handleId === 'valid') {
+		if (handleId === 'true' || handleId === 'valid' || handleId === 'success') {
 			return 'stroke: #10b981; stroke-width: 2.5px;';
 		}
 		return 'stroke: #6366f1; stroke-width: 2px;';
@@ -311,6 +317,35 @@
 				data = {
 					title: 'Delay / Sleep',
 					delayMs: 500
+				};
+				break;
+			case 'googleAuthNode':
+				data = {
+					title: 'Google OAuth',
+					tokenSource: 'header',
+					tokenField: 'credential',
+					clientId: ''
+				};
+				break;
+			case 'userManagementNode':
+				data = {
+					title: 'User Management',
+					action: 'signup',
+					emailExpr: 'payload.email',
+					passwordExpr: 'payload.password',
+					nameExpr: 'payload.name',
+					role: 'user'
+				};
+				break;
+			case 'openAiNode':
+				data = {
+					title: 'OpenAI Completion',
+					model: 'gpt-4o-mini',
+					systemPrompt: 'You are an AI assistant helping with API processing.',
+					userPrompt: 'Process this request: {{payload.prompt || payload.text}}',
+					temperature: 0.7,
+					maxTokens: 1000,
+					responseFormat: 'text'
 				};
 				break;
 		}

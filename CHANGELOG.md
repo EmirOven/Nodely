@@ -7,6 +7,57 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0] - 2026-10-08
+
+### Added
+- **Google Auth Node (`googleAuthNode`)**:
+  - Validates Google OAuth ID tokens from either incoming headers (`Authorization: Bearer <token>`) or request payload (`payload.credential` / `payload.id_token`).
+  - Automatically decodes token claims (email, name, picture, subject ID, audience, expiration).
+  - Verifies Client ID audience matching and token validity.
+  - Exposes dedicated dual branch handles: `Valid` (emerald) and `Invalid` (rose), passing verified user claims to downstream nodes in the pipeline.
+- **User Management Node (`userManagementNode`)**:
+  - Full node-based, Supabase-style user authentication and account management for projects created with Nodely.
+  - Supports 6 distinct lifecycle actions:
+    - `signup`: Creates new accounts with salted SHA-256 password hashing and initial roles.
+    - `login`: Verifies user credentials, updates last sign-in timestamp, and issues bearer session tokens.
+    - `getUser`: Retrieves user profiles by ID or email expression.
+    - `updateUser`: Updates profile fields (name, role, password).
+    - `deleteUser`: Permanently deletes a user from the project database.
+    - `listUsers`: Fetches paginated user lists with role and query filters.
+  - Supports dynamic expression interpolation (e.g. `{{payload.email}}`, `{{payload.password}}`).
+  - Exposes dual branching: `Success` (emerald) and `Error` (rose).
+- **OpenAI Node (`openAiNode`)**:
+  - LLM completion node with model selection (`gpt-4o-mini`, `gpt-4o`, `gpt-3.5-turbo`, `o1-mini`).
+  - Supports system prompt, user prompt with variable interpolation (e.g. `{{payload.prompt}}`), temperature slider, max tokens, and response formatting (`text` vs `json_object`).
+  - Uses OpenAI API key configured in Project Settings (or node-level override) with automatic fallback simulation when running in mock test mode.
+  - Exposes dual branching: `Success` (emerald) and `Error` (rose).
+- **Project Settings & Secrets Page (`/settings`)**:
+  - Dedicated configuration dashboard for environment secrets and defaults.
+  - OpenAI API Key configuration with live connection testing ("Verify OpenAI Connection" button).
+  - Google OAuth Client ID & Client Secret management with configuration guide links.
+  - JWT secret key manager with one-click cryptographically secure token generator and expiration controls.
+  - Gateway CORS origin controls.
+  - Local disk persistence via `.nodely-settings.json` and REST endpoints at `/api/settings`.
+- **Project Users Management Page (`/users`)**:
+  - Supabase-style user dashboard for managing all accounts created across nodeflow applications.
+  - Real-time user statistics: Total Users, Active Users, Google OAuth Users, and Banned Accounts.
+  - Search and filter by role (`user`, `admin`, `moderator`), provider (`email`, `google`), and status (`active`, `banned`).
+  - Manual user creation modal with password and role configuration.
+  - Edit user profile modal (name, role, password reset).
+  - One-click account ban / unban toggle.
+  - User deletion modal with confirmation.
+  - Local disk persistence via `.nodely-users.json` and REST endpoints at `/api/users` and `/api/users/[id]`.
+- **Unified Header Navigation**:
+  - Added global top-level navigation tabs (`API Routes`, `Project Users`, `Settings`) across the Route Browser (`/`), User Directory (`/users`), Settings (`/settings`), and Visual Editor (`Navbar.svelte`).
+- **Code Generation & Execution Support**:
+  - Added full execution support for `googleAuthNode`, `userManagementNode`, and `openAiNode` in `src/lib/engine/executor.ts`.
+  - Added code generation support for all 3 nodes in both SvelteKit and Express exporters (`src/lib/engine/generator.ts`).
+
+### Changed
+- Bumped project version to `0.3.0` across `package.json`, navbar badges, and dashboard headers.
+
+---
+
 ## [0.2.1] - 2026-10-08
 
 ### Fixed

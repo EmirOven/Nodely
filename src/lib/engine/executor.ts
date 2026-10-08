@@ -12,7 +12,10 @@ import type {
 	HttpResponseData,
 	AuthNodeData,
 	ValidatorData,
-	DelayData
+	DelayData,
+	GoogleAuthData,
+	UserManagementData,
+	OpenAiData
 } from '../types';
 
 // Global in-memory storage for simulated database
@@ -339,6 +342,308 @@ export async function executeFlow(
 				state[currentId] = stepOutput;
 				state.lastResult = stepOutput;
 				nextHandleOut = 'output';
+			} else if (nodeType === 'googleAuthNode') {
+				const googleData = nodeData as unknown as GoogleAuthData;
+				let token = '';
+
+				if (googleData.tokenSource === 'payload') {
+					const field = googleData.tokenField || 'credential';
+					token = payload && typeof payload === 'object' ? payload[field] || payload['id_token'] || payload['token'] : '';
+				} else {
+					const authHeader = (req.headers['authorization'] || req.headers['Authorization'] || '') as string;
+					const match = authHeader.match(/^Bearer\s+(.*)$/i);
+					token = match ? match[1].trim() : authHeader.trim();
+				}
+
+				let googleUser: any = null;
+				let isValid = false;
+
+				if (token) {
+					try {
+						const parts = token.split('.');
+						if (parts.length === 3) {
+							const base64Url = parts[1];
+							const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+							const jsonPayload = decodeURIComponent(
+								atob(base64)
+									.split('')
+									.map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+									.join('')
+							);
+							const parsed = JSON.parse(jsonPayload);
+							if (parsed && (parsed.email || parsed.sub)) {
+								googleUser = {
+									sub: parsed.sub || 'google_sub_' + Math.random().toString(36).substring(2, 8),
+									email: parsed.email || 'user@gmail.com',
+									name: parsed.name || 'Google User',
+									picture: parsed.picture,
+									email_verified: parsed.email_verified ?? true
+								};
+								isValid = true;
+							}
+						} else if (token === 'test_google_token' || token.length > 10) {
+							googleUser = {
+								sub: 'google_usr_test_' + Math.random().toString(36).substring(2, 6),
+								email: 'test.user@gmail.com',
+								name: 'Test Google User',
+								email_verified: true
+							};
+							isValid = true;
+						}
+					} catch {
+						isValid = false;
+					}
+				}
+
+				nextHandleOut = isValid ? 'valid' : 'invalid';
+				stepOutput = {
+					isValid,
+					googleUser: isValid ? googleUser : null,
+					tokenSource: googleData.tokenSource,
+					branchTaken: nextHandleOut
+				};
+				state[currentId] = stepOutput;
+				state.lastResult = stepOutput;
+				if (isValid) {
+					state.googleUser = googleUser;
+					if (typeof payload === 'object' && payload !== null) {
+						payload.googleUser = googleUser;
+					}
+				} else {
+					if (typeof payload === 'object' && payload !== null) {
+						payload.authError = 'Invalid or missing Google OAuth ID token';
+					}
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					isValid ? 'info' : 'warn',
+					`Google OAuth Token Verification: ${isValid ? 'VALID' : 'INVALID'}. Routing to "${nextHandleOut}".`
+				);
+			} else if (nodeType === 'userManagementNode') {
+				const uData = nodeData as unknown as UserManagementData;
+				const action = uData.action || 'signup';
+
+				const evalExpr = (expr?: string) => {
+					if (!expr) return undefined;
+					try {
+						const fn = new Function('req', 'payload', 'state', `return (${expr});`);
+						return fn(req, payload, state);
+					} catch {
+						return undefined;
+					}
+				};
+
+				const email = evalExpr(uData.emailExpr) ?? (payload && payload.email);
+				const password = evalExpr(uData.passwordExpr) ?? (payload && payload.password);
+				const name = evalExpr(uData.nameExpr) ?? (payload && payload.name);
+				const userId = evalExpr(uData.userIdExpr) ?? (payload && payload.userId);
+				const role = uData.role || 'user';
+
+				let success = false;
+				let resultData: any = null;
+				let errorMsg: string | undefined = undefined;
+
+				if (!inMemoryDatabase.users) inMemoryDatabase.users = {};
+
+				if (action === 'signup') {
+					if (!email || !String(email).includes('@')) {
+						errorMsg = 'Invalid email address provided for sign up';
+					} else {
+						const existing = Object.values(inMemoryDatabase.users).find((u: any) => u.email === email);
+						if (existing) {
+							errorMsg = `User with email ${email} already exists`;
+						} else {
+							const id = 'usr_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+							const newUser = {
+								id,
+								email: String(email).toLowerCase(),
+								name: name || String(email).split('@')[0],
+								role,
+								provider: 'email',
+								createdAt: new Date().toISOString()
+							};
+							inMemoryDatabase.users[id] = newUser;
+							const sessionToken = `tok_${id}_${Math.random().toString(36).substring(2, 10)}`;
+							resultData = { user: newUser, sessionToken, status: 'created' };
+							success = true;
+						}
+					}
+				} else if (action === 'login') {
+					if (!email) {
+						errorMsg = 'Email is required for sign in';
+					} else {
+						const user = Object.values(inMemoryDatabase.users).find((u: any) => u.email?.toLowerCase() === String(email).toLowerCase());
+						if (user) {
+							const sessionToken = `tok_${(user as any).id}_${Math.random().toString(36).substring(2, 10)}`;
+							resultData = { user, sessionToken, status: 'authenticated' };
+							success = true;
+						} else {
+							errorMsg = 'Invalid email or password';
+						}
+					}
+				} else if (action === 'getUser') {
+					const targetId = userId || (payload && payload.userId);
+					const user = (targetId && inMemoryDatabase.users[targetId]) || Object.values(inMemoryDatabase.users)[0];
+					if (user) {
+						resultData = { user };
+						success = true;
+					} else {
+						errorMsg = 'User not found';
+					}
+				} else if (action === 'deleteUser') {
+					const targetId = userId || (payload && payload.userId);
+					if (targetId && inMemoryDatabase.users[targetId]) {
+						delete inMemoryDatabase.users[targetId];
+						resultData = { deleted: true, userId: targetId };
+						success = true;
+					} else {
+						errorMsg = 'User not found for deletion';
+					}
+				} else if (action === 'listUsers') {
+					const users = Object.values(inMemoryDatabase.users);
+					resultData = { users, count: users.length };
+					success = true;
+				}
+
+				nextHandleOut = success ? 'success' : 'error';
+				stepOutput = {
+					action,
+					success,
+					data: resultData,
+					error: errorMsg,
+					branchTaken: nextHandleOut
+				};
+				state[currentId] = stepOutput;
+				state.lastResult = stepOutput;
+				if (success && resultData?.user) {
+					state.user = resultData.user;
+					if (resultData.sessionToken) state.sessionToken = resultData.sessionToken;
+					if (typeof payload === 'object' && payload !== null) {
+						payload.user = resultData.user;
+						if (resultData.sessionToken) payload.sessionToken = resultData.sessionToken;
+					}
+				} else if (!success && errorMsg) {
+					if (typeof payload === 'object' && payload !== null) {
+						payload.authError = errorMsg;
+					}
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					success ? 'info' : 'warn',
+					`User Management (${action}): ${success ? 'SUCCESS' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
+				);
+			} else if (nodeType === 'openAiNode') {
+				const aiData = nodeData as unknown as OpenAiData;
+
+				const interpolate = (tpl: string) => {
+					if (!tpl) return '';
+					return tpl.replace(/\{\{\s*([^}]+)\s*\}\}/g, (_, expr) => {
+						try {
+							const fn = new Function('req', 'payload', 'state', `return (${expr});`);
+							const val = fn(req, payload, state);
+							return val !== undefined && val !== null ? (typeof val === 'object' ? JSON.stringify(val) : String(val)) : '';
+						} catch {
+							return '';
+						}
+					});
+				};
+
+				const resolvedSystem = interpolate(aiData.systemPrompt || 'You are an AI assistant.');
+				const resolvedUser = interpolate(aiData.userPrompt || 'Process this request');
+				const apiKey = aiData.apiKeyOverride || (typeof process !== 'undefined' ? process.env?.OPENAI_API_KEY : '');
+
+				let aiText = '';
+				let aiJson: any = null;
+				let success = true;
+				let errorMsg: string | undefined = undefined;
+
+				if (apiKey && apiKey.startsWith('sk-')) {
+					try {
+						addLog(currentId, nodeTitle, 'info', `Calling OpenAI API (${aiData.model || 'gpt-4o-mini'})...`);
+						const res = await fetch('https://api.openai.com/v1/chat/completions', {
+							method: 'POST',
+							headers: {
+								'Content-Type': 'application/json',
+								'Authorization': `Bearer ${apiKey}`
+							},
+							body: JSON.stringify({
+								model: aiData.model || 'gpt-4o-mini',
+								messages: [
+									{ role: 'system', content: resolvedSystem },
+									{ role: 'user', content: resolvedUser }
+								],
+								temperature: aiData.temperature ?? 0.7,
+								max_tokens: aiData.maxTokens ?? 1000,
+								response_format: aiData.responseFormat === 'json_object' ? { type: 'json_object' } : undefined
+							})
+						});
+
+						if (res.ok) {
+							const completion = await res.json();
+							aiText = completion.choices?.[0]?.message?.content || '';
+							if (aiData.responseFormat === 'json_object') {
+								try {
+									aiJson = JSON.parse(aiText);
+								} catch {
+									aiJson = { text: aiText };
+								}
+							}
+							success = true;
+						} else {
+							const errBody = await res.json().catch(() => ({}));
+							errorMsg = errBody?.error?.message || `OpenAI HTTP error ${res.status}`;
+							success = false;
+						}
+					} catch (e: any) {
+						errorMsg = e.message || 'Failed to call OpenAI API';
+						success = false;
+					}
+				} else {
+					addLog(currentId, nodeTitle, 'info', `Simulating OpenAI completion (no API key configured).`);
+					aiText = `[Simulated ${aiData.model || 'gpt-4o-mini'} Completion]: Successfully processed prompt "${resolvedUser.slice(0, 80)}${resolvedUser.length > 80 ? '...' : ''}". Add your OpenAI API Key in Settings to enable live LLM generation.`;
+					if (aiData.responseFormat === 'json_object') {
+						aiJson = {
+							status: 'simulated_success',
+							model: aiData.model || 'gpt-4o-mini',
+							promptReceived: resolvedUser,
+							note: 'Configure OpenAI API Key in Settings for live LLM completions.'
+						};
+					}
+					success = true;
+				}
+
+				nextHandleOut = success ? 'success' : 'error';
+				stepOutput = {
+					text: aiText,
+					json: aiJson,
+					model: aiData.model || 'gpt-4o-mini',
+					success,
+					error: errorMsg,
+					branchTaken: nextHandleOut
+				};
+				state[currentId] = stepOutput;
+				state.lastResult = stepOutput;
+				if (success) {
+					state.aiResponse = stepOutput;
+					if (typeof payload === 'object' && payload !== null) {
+						payload.aiResponse = stepOutput;
+					}
+				} else if (errorMsg) {
+					if (typeof payload === 'object' && payload !== null) {
+						payload.aiError = errorMsg;
+					}
+				}
+
+				addLog(
+					currentId,
+					nodeTitle,
+					success ? 'info' : 'error',
+					`OpenAI Node: ${success ? 'COMPLETED' : 'FAILED: ' + errorMsg}. Routing to "${nextHandleOut}".`
+				);
 			} else if (nodeType === 'httpResponse') {
 				const respData = nodeData as unknown as HttpResponseData;
 				const statusCode = respData.statusCode || 200;

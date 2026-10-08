@@ -327,11 +327,24 @@
 					<span
 						class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 					>
-						v0.2.1
+						v0.3.0
 					</span>
 				</div>
 				<p class="text-xs text-slate-400">Visual API Builder & Endpoint Manager</p>
 			</div>
+		</div>
+
+		<!-- Center: Navigation Tabs -->
+		<div class="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800">
+			<a href="/" class="px-3 py-1 text-xs font-semibold text-white bg-slate-800 rounded-lg shadow-sm">
+				API Routes
+			</a>
+			<a href="/users" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
+				Project Users
+			</a>
+			<a href="/settings" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
+				Settings
+			</a>
 		</div>
 
 		<!-- Right: Action Buttons -->

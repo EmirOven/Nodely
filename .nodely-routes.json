@@ -1,7 +1,7 @@
 [
   {
     "id": "weather-api",
-    "title": "Weather Data Aggregator",
+    "title": "Weather Query",
     "description": "Fetches live Berlin forecast from OpenMeteo and returns formatted conditions.",
     "method": "GET",
     "path": "/api/v1/weather",
@@ -17,6 +17,10 @@
           "title": "Weather Query",
           "method": "GET",
           "path": "/api/v1/weather"
+        },
+        "measured": {
+          "width": 320,
+          "height": 216
         }
       },
       {
@@ -30,6 +34,10 @@
           "title": "OpenMeteo API",
           "method": "GET",
           "url": "https://api.open-meteo.com/v1/forecast?latitude=52.52&longitude=13.41&current_weather=true"
+        },
+        "measured": {
+          "width": 320,
+          "height": 173
         }
       },
       {
@@ -42,6 +50,10 @@
         "data": {
           "title": "Format Data",
           "code": "const data = state['fetch-w'] || {};\nconst current = data.current_weather || {};\n\nlog('Parsed weather data for location');\n\nreturn {\n  city: 'Berlin',\n  temperatureCelsius: current.temperature,\n  windSpeedKmh: current.windspeed,\n  timestamp: current.time\n};"
+        },
+        "measured": {
+          "width": 384,
+          "height": 263
         }
       },
       {
@@ -55,6 +67,10 @@
           "title": "200 OK",
           "statusCode": 200,
           "bodyExpression": "state.lastResult"
+        },
+        "measured": {
+          "width": 320,
+          "height": 283
         }
       }
     ],
@@ -89,8 +105,8 @@
     ],
     "isPublished": true,
     "createdAt": "2026-10-08T13:23:06.081Z",
-    "updatedAt": "2026-10-08T13:27:47.181Z",
-    "publishedAt": "2026-10-08T13:27:47.181Z"
+    "updatedAt": "2026-10-08T13:37:19.788Z",
+    "publishedAt": "2026-10-08T13:37:19.788Z"
   },
   {
     "id": "user-auth",
@@ -372,5 +388,67 @@
     "isPublished": false,
     "createdAt": "2026-10-08T13:23:06.081Z",
     "updatedAt": "2026-10-08T13:23:06.081Z"
+  },
+  {
+    "id": "route_1791468695736_w03g",
+    "title": "Hello World",
+    "description": "",
+    "method": "GET",
+    "path": "/api/v1/endpoint-zm7a",
+    "nodes": [
+      {
+        "id": "trigger-1",
+        "type": "httpTrigger",
+        "position": {
+          "x": 300,
+          "y": 100
+        },
+        "data": {
+          "title": "Hello World",
+          "method": "GET",
+          "path": "/api/v1/endpoint-zm7a"
+        },
+        "measured": {
+          "width": 320,
+          "height": 215
+        }
+      },
+      {
+        "id": "httpResponse_1791468710167",
+        "type": "httpResponse",
+        "position": {
+          "x": 283.96139081940606,
+          "y": 377.3538181371761
+        },
+        "data": {
+          "title": "Send Response",
+          "statusCode": 200,
+          "bodyExpression": "{\"result\": \"hello world\"}"
+        },
+        "measured": {
+          "width": 320,
+          "height": 283
+        },
+        "selected": false,
+        "dragging": false
+      }
+    ],
+    "edges": [
+      {
+        "source": "trigger-1",
+        "sourceHandle": "output",
+        "target": "httpResponse_1791468710167",
+        "targetHandle": "input",
+        "id": "e_1791468712534_dmud",
+        "animated": true,
+        "selectable": true,
+        "interactionWidth": 30,
+        "style": "stroke: #6366f1; stroke-width: 2px;"
+      }
+    ],
+    "isPublished": true,
+    "createdAt": "2026-10-08T14:11:37.816Z",
+    "updatedAt": "2026-10-08T14:12:23.482Z",
+    "publishedAt": "2026-10-08T14:12:23.482Z"
   }
 ]
