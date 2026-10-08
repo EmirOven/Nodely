@@ -13,7 +13,8 @@
 		Save,
 		CheckCircle2,
 		Users,
-		Settings
+		Settings,
+		Blocks
 	} from '@lucide/svelte';
 	import { slide } from 'svelte/transition';
 
@@ -103,6 +104,14 @@
 				<span class="hidden sm:inline">Users</span>
 			</a>
 			<a
+				href="/extensions"
+				class="flex items-center gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/60 px-2 py-1 text-xs font-medium text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition"
+				title="Nodeflow Extensions & Plugins"
+			>
+				<Blocks class="h-3.5 w-3.5 text-slate-400" />
+				<span class="hidden sm:inline">Extensions</span>
+			</a>
+			<a
 				href="/settings"
 				class="flex items-center gap-1.5 rounded-lg border border-slate-800/80 bg-slate-900/60 px-2 py-1 text-xs font-medium text-slate-400 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition"
 				title="Nodeflow Settings & Secrets"
@@ -122,7 +131,7 @@
 			<div class="flex items-center gap-2">
 				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodeflow'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.5.2
+					v0.5.3
 				</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">

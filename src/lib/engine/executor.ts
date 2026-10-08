@@ -1012,6 +1012,49 @@ export async function executeFlow(
 				stepOutput = responseResult;
 				addLog(currentId, nodeTitle, 'info', `Returning HTTP ${statusCode} response`, parsedBody);
 				currentNode = undefined;
+			} else {
+				// Custom / Extension Node Execution
+				addLog(currentId, nodeTitle, 'info', `Executing extension node "${nodeTitle}" (${nodeType})`);
+				const extResult: any = {
+					extension: nodeType,
+					executedAt: Date.now(),
+					success: true,
+					data: { ...(nodeData as any) }
+				};
+
+				// If custom extension provided a runtimeHandler snippet
+				if ((nodeData as any)?.runtimeHandler && typeof (nodeData as any).runtimeHandler === 'string') {
+					try {
+						const extFn = new Function(
+							'req',
+							'payload',
+							'state',
+							'node',
+							'store',
+							'addLog',
+							'currentId',
+							'nodeTitle',
+							`
+							"use strict";
+							return (async () => {
+								${(nodeData as any).runtimeHandler}
+							})();
+							`
+						);
+						const handlerOutput = await extFn(req, payload, state, currentNode, inMemoryDatabase, addLog, currentId, nodeTitle);
+						if (handlerOutput !== undefined) {
+							Object.assign(extResult, handlerOutput);
+						}
+					} catch (e: any) {
+						addLog(currentId, nodeTitle, 'warn', `Runtime handler error: ${e.message}`);
+					}
+				}
+
+				stepOutput = extResult;
+				state[currentId] = extResult;
+				state.lastResult = extResult;
+				nextHandleOut = 'success';
+				addLog(currentId, nodeTitle, 'info', `Extension node "${nodeTitle}" finished. Routing to "${nextHandleOut}".`);
 			}
 		} catch (err: any) {
 			stepError = err.message || String(err);

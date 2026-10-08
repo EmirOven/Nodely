@@ -154,9 +154,74 @@ export type NodelyNodeType =
 	| 'aiNode'
 	| 'openAiNode'
 	| 'telegramTrigger'
-	| 'telegramSendMessage';
+	| 'telegramSendMessage'
+	| (string & {});
 
 export type NodeflowNodeType = NodelyNodeType;
+
+export type ExtensionAccentColor =
+	| 'blue'
+	| 'emerald'
+	| 'indigo'
+	| 'purple'
+	| 'amber'
+	| 'rose'
+	| 'teal'
+	| 'cyan'
+	| 'yellow'
+	| 'slate';
+
+export interface ExtensionFieldProperty {
+	name: string;
+	label: string;
+	type: 'text' | 'textarea' | 'select' | 'boolean' | 'number' | 'password';
+	defaultValue?: any;
+	placeholder?: string;
+	options?: { label: string; value: string }[];
+	description?: string;
+}
+
+export interface ExtensionOutputBranch {
+	id: string;
+	label: string;
+	color: ExtensionAccentColor;
+}
+
+export interface ExtensionNodeDefinition {
+	title: string;
+	badgeText?: string;
+	width?: string;
+	hasInputHandle: boolean;
+	hasOutputHandle?: boolean;
+	outputs?: ExtensionOutputBranch[];
+	properties: ExtensionFieldProperty[];
+	defaultData: Record<string, any>;
+	runtimeHandler?: string;
+	codeGeneration?: {
+		sveltekit?: string;
+		express?: string;
+	};
+}
+
+export interface ExtensionPackage {
+	id: string;
+	name: string;
+	version: string;
+	description: string;
+	category: string;
+	author: string;
+	icon: string;
+	accentColor: ExtensionAccentColor;
+	nodeType: string;
+	enabled: boolean;
+	isBuiltIn: boolean;
+	tags: string[];
+	website?: string;
+	readme?: string;
+	nodeDefinition: ExtensionNodeDefinition;
+	createdAt: string;
+	updatedAt: string;
+}
 
 export interface ExecutionLog {
 	nodeId: string;

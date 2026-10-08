@@ -16,3 +16,4 @@ export { default as AiNode } from './AiNode.svelte';
 export { default as OpenAiNode } from './OpenAiNode.svelte';
 export { default as TelegramTriggerNode } from './TelegramTriggerNode.svelte';
 export { default as TelegramSendMessageNode } from './TelegramSendMessageNode.svelte';
+export { default as DynamicExtensionNode } from './DynamicExtensionNode.svelte';

@@ -255,7 +255,7 @@
 						<span
 							class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20"
 						>
-							v0.5.0
+							v0.5.3
 						</span>
 					</div>
 					<p class="text-xs text-slate-400">Nodeflow Auth Database & User Directory</p>
@@ -270,6 +270,9 @@
 			</a>
 			<a href="/users" class="px-3 py-1 text-xs font-semibold text-white bg-slate-800 rounded-lg shadow-sm">
 				Project Users
+			</a>
+			<a href="/extensions" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
+				Extensions
 			</a>
 			<a href="/settings" class="px-3 py-1 text-xs font-medium text-slate-400 hover:text-white rounded-lg transition">
 				Settings

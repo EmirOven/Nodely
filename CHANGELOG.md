@@ -7,6 +7,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.3] - 2026-10-08
+
+### Added
+- **Full Extensions Management Page (`/extensions`)**:
+  - Dedicated extensions dashboard to import, explore, configure, inspect, and manage custom nodes and plugins.
+  - Multi-tab Extension Import modal:
+    - **Curated Registry**: 1-click install for popular community integrations (Discord Webhooks, Stripe Payments, Slack Notifier, Resend Email, Redis Cache & Rate Limiting, GitHub Event Dispatcher).
+    - **Upload JSON File**: Drag & drop or file picker to import custom `.json` node manifests.
+    - **Remote URL / CDN**: Import direct manifests from raw GitHub links, CDNs, or custom API endpoints.
+    - **Manifest JSON Editor**: In-browser code editor with pre-filled sample templates and live JSON schema validation.
+  - Detailed Inspection & Manifest Drawer: Displays node architecture, input/output handles, configurable property table, and copyable raw JSON manifest.
+  - Full CRUD & Persistence Engine: Server-side JSON storage in `.nodely-extensions.json` via `/api/extensions` with instant optimistic client store updates.
+  - Quick toggle switch to enable/disable extensions from appearing in the canvas palette.
+  - 1-click export of single or bundled extension manifests (`/api/extensions/export`).
+- **Dynamic Extension Node Component (`DynamicExtensionNode.svelte`)**:
+  - First-class generic node component built directly on `BaseNode.svelte`.
+  - Automatically renders custom configurable inputs (text, password with reveal toggle, textarea, dropdown select, numbers, checkboxes) and discrete output handles defined by extension manifests.
+- **Dynamic Icon Helper (`DynamicIcon.svelte`)**:
+  - Dynamic Lucide icon resolver mapping icon names to verified vector icons with clean fallback handling.
+- **Editor Canvas & Sidebar Integration**:
+  - Sidebar palette automatically lists enabled custom extensions with their custom category, accent color, and drag-and-drop capability.
+  - Canvas dynamically recognizes custom extension node types and renders them with full interactivity and pipeline execution support.
+- **Universal Navigation**:
+  - Added "Extensions" tab across all navigation bars (Dashboard, Users, Editor, Settings, and Extensions).
+
+---
+
 ## [0.5.2] - 2026-10-08
 
 ### Added

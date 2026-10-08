@@ -35,11 +35,24 @@
 	import PublishModal from './PublishModal.svelte';
 
 	import { templatesData, type TemplateDefinition } from '../templates';
+	import DynamicExtensionNode from './nodes/DynamicExtensionNode.svelte';
 	import { executeFlow } from '../engine/executor';
 	import { generateSvelteKitCode, generateExpressCode } from '../engine/generator';
-	import type { NodelyNodeType, TestRequestPayload, ExecutionResult, HttpMethod } from '../types';
+	import type { NodelyNodeType, ExtensionPackage, TestRequestPayload, ExecutionResult, HttpMethod } from '../types';
 
-	const nodeTypes: any = {
+	let loadedExtensions = $state<ExtensionPackage[]>([]);
+
+	async function loadRegisteredExtensions() {
+		try {
+			const res = await fetch('/api/extensions');
+			if (res.ok) {
+				const json = await res.json();
+				loadedExtensions = json.extensions || [];
+			}
+		} catch {}
+	}
+
+	const baseNodeTypes: any = {
 		httpTrigger: TriggerNode,
 		codeBlock: CodeBlockNode,
 		conditional: ConditionalNode,
@@ -56,6 +69,17 @@
 		telegramTrigger: TelegramTriggerNode,
 		telegramSendMessage: TelegramSendMessageNode
 	};
+
+	const nodeTypes = $derived.by(() => {
+		const types: Record<string, any> = { ...baseNodeTypes };
+		for (const ext of loadedExtensions) {
+			if (!types[ext.nodeType]) {
+				types[ext.nodeType] = DynamicExtensionNode;
+			}
+		}
+		types['dynamicExtensionNode'] = DynamicExtensionNode;
+		return types;
+	});
 
 	interface Props {
 		routeId?: string;
@@ -100,6 +124,7 @@
 	// Load autosave preference from localStorage on mount
 	$effect(() => {
 		if (typeof window !== 'undefined') {
+			loadRegisteredExtensions();
 			const savedPref = localStorage.getItem('nodeflow_autosave');
 			if (savedPref !== null) {
 				isAutosave = savedPref === 'true';
@@ -457,6 +482,21 @@
 					botToken: ''
 				};
 				break;
+		}
+
+		// Support custom / imported extension node defaults
+		const customExt = loadedExtensions.find((e) => e.nodeType === type || e.id === type);
+		if (customExt) {
+			data = {
+				title: customExt.nodeDefinition.title || customExt.name,
+				category: customExt.category,
+				accentColor: customExt.accentColor,
+				icon: customExt.icon,
+				properties: customExt.nodeDefinition.properties,
+				outputs: customExt.nodeDefinition.outputs,
+				width: customExt.nodeDefinition.width || 'w-80',
+				...customExt.nodeDefinition.defaultData
+			};
 		}
 
 		return {
