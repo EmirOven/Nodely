@@ -1,16 +1,8 @@
 [
   {
-    "id": "test",
-    "title": "Test Flow",
-    "method": "GET",
-    "path": "/api/v1/test",
-    "nodes": [],
-    "edges": [],
-    "publishedAt": "2026-10-08T12:33:05.751Z"
-  },
-  {
     "id": "weather-api",
     "title": "Weather Data Aggregator",
+    "description": "Fetches live Berlin forecast from OpenMeteo and returns formatted conditions.",
     "method": "GET",
     "path": "/api/v1/weather",
     "nodes": [
@@ -95,11 +87,15 @@
         "style": "stroke: #10b981; stroke-width: 2px;"
       }
     ],
+    "isPublished": true,
+    "createdAt": "2026-10-08T13:23:06.081Z",
+    "updatedAt": "2026-10-08T13:24:37.112Z",
     "publishedAt": "2026-10-08T13:24:34.179Z"
   },
   {
     "id": "user-auth",
     "title": "User Registration & Auth",
+    "description": "Validates user payload, hashes password mock, and persists to users collection.",
     "method": "POST",
     "path": "/api/v1/auth/register",
     "nodes": [
@@ -229,6 +225,152 @@
         "style": "stroke: #ef4444; stroke-width: 2.5px;"
       }
     ],
+    "isPublished": true,
+    "createdAt": "2026-10-08T13:23:06.081Z",
+    "updatedAt": "2026-10-08T13:23:43.403Z",
     "publishedAt": "2026-10-08T13:23:06.081Z"
+  },
+  {
+    "id": "note-crud",
+    "title": "Note Storage & List",
+    "description": "Stores categorized notes with timestamps in KV data store.",
+    "method": "POST",
+    "path": "/api/v1/notes",
+    "nodes": [
+      {
+        "id": "trigger-n",
+        "type": "httpTrigger",
+        "position": {
+          "x": 300,
+          "y": 50
+        },
+        "data": {
+          "title": "Create Note",
+          "method": "POST",
+          "path": "/api/v1/notes"
+        }
+      },
+      {
+        "id": "code-n",
+        "type": "codeBlock",
+        "position": {
+          "x": 270,
+          "y": 320
+        },
+        "data": {
+          "title": "Attach Metadata",
+          "code": "const noteId = 'note_' + Math.random().toString(36).substring(2, 7);\nlog('Generated note id: ' + noteId);\n\nreturn {\n  id: noteId,\n  title: payload.title || 'Untitled',\n  content: payload.content || '',\n  tags: payload.tags || [],\n  createdAt: new Date().toISOString()\n};"
+        }
+      },
+      {
+        "id": "store-n",
+        "type": "dataStore",
+        "position": {
+          "x": 300,
+          "y": 660
+        },
+        "data": {
+          "title": "Store Note",
+          "operation": "set",
+          "collection": "notes",
+          "keyExpr": "payload.id",
+          "valueExpr": "payload"
+        }
+      },
+      {
+        "id": "resp-n",
+        "type": "httpResponse",
+        "position": {
+          "x": 300,
+          "y": 1000
+        },
+        "data": {
+          "title": "201 Created",
+          "statusCode": 201,
+          "bodyExpression": "{\n  success: true,\n  note: payload\n}"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "en1-2",
+        "source": "trigger-n",
+        "target": "code-n",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #6366f1; stroke-width: 2px;"
+      },
+      {
+        "id": "en2-3",
+        "source": "code-n",
+        "target": "store-n",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #10b981; stroke-width: 2px;"
+      },
+      {
+        "id": "en3-4",
+        "source": "store-n",
+        "target": "resp-n",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #10b981; stroke-width: 2px;"
+      }
+    ],
+    "isPublished": false,
+    "createdAt": "2026-10-08T13:23:06.081Z",
+    "updatedAt": "2026-10-08T13:23:06.081Z"
+  },
+  {
+    "id": "hello-starter",
+    "title": "Simple Hello API",
+    "description": "Minimal starter workflow with an HTTP Trigger and instant JSON response.",
+    "method": "GET",
+    "path": "/api/v1/hello",
+    "nodes": [
+      {
+        "id": "trigger-empty",
+        "type": "httpTrigger",
+        "position": {
+          "x": 320,
+          "y": 100
+        },
+        "data": {
+          "title": "HTTP Trigger",
+          "method": "GET",
+          "path": "/api/v1/hello"
+        }
+      },
+      {
+        "id": "resp-empty",
+        "type": "httpResponse",
+        "position": {
+          "x": 320,
+          "y": 400
+        },
+        "data": {
+          "title": "200 OK",
+          "statusCode": 200,
+          "bodyExpression": "{\n  message: 'Hello from Nodely API!',\n  status: 'active',\n  timestamp: new Date().toISOString()\n}"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e-empty-1",
+        "source": "trigger-empty",
+        "target": "resp-empty",
+        "sourceHandle": "output",
+        "targetHandle": "input",
+        "animated": true,
+        "style": "stroke: #6366f1; stroke-width: 2px;"
+      }
+    ],
+    "isPublished": false,
+    "createdAt": "2026-10-08T13:23:06.081Z",
+    "updatedAt": "2026-10-08T13:23:06.081Z"
   }
 ]

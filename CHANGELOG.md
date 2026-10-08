@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0] - 2026-10-08
+
+### Added
+- **API Route Browser & Dashboard (`/`)**:
+  - Converted the root index route into a centralized API browser and endpoint management dashboard.
+  - Displays all created API endpoints with HTTP method pills (`GET`, `POST`, `PUT`, `DELETE`, `PATCH`), live/draft status indicators, node pipeline summaries, and quick-copy endpoint URLs.
+- **Multi-Route Management Engine**:
+  - Persistent server route store (`routeStore.ts` & `.nodely-routes.json`) with full CRUD API endpoints (`/api/routes` and `/api/routes/[id]`).
+  - Seamlessly keeps live published endpoints (`publishedStore.ts`) in sync with route statuses.
+- **Interactive Route Creation**:
+  - Modal enabling users to specify route title, method, path, and starter blueprint (`Blank`, `Simple Starter`, `Auth & Validation`, `API Aggregator`, `Note CRUD`).
+  - Automatically provisions the route and redirects to the visual editor.
+- **cURL Snippets & Live Request Tester**:
+  - Modal providing copyable cURL commands for each hosted route.
+  - Integrated live test trigger that sends HTTP requests to the local gateway and displays status code, headers, and JSON responses.
+- **Visual Editor Deep Linking (`/editor/[id]`)**:
+  - Dedicated dynamic routes for editing each API pipeline independently.
+  - Top navigation bar now includes "Back to All Routes", current endpoint path pill, and "Save Workflow" action.
+
+### Changed
+- Bumped project version to `0.2.0` in `package.json`, navbar badges, and documentation.
+
+---
+
 ## [0.1.0] - 2026-10-08
 
 ### Added

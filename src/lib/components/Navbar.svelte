@@ -8,7 +8,10 @@
 		Radio,
 		ChevronDown,
 		FileText,
-		Globe
+		Globe,
+		ArrowLeft,
+		Save,
+		CheckCircle2
 	} from '@lucide/svelte';
 
 	interface Props {
@@ -17,7 +20,14 @@
 		onOpenPublish: () => void;
 		onSelectTemplate: (templateName: string) => void;
 		onResetFlow: () => void;
+		onSave?: () => void;
 		isPublishing?: boolean;
+		isSaving?: boolean;
+		routeId?: string;
+		routeTitle?: string;
+		routeMethod?: string;
+		routePath?: string;
+		isRoutePublished?: boolean;
 	}
 
 	let {
@@ -26,7 +36,14 @@
 		onOpenPublish,
 		onSelectTemplate,
 		onResetFlow,
-		isPublishing = false
+		onSave,
+		isPublishing = false,
+		isSaving = false,
+		routeId,
+		routeTitle,
+		routeMethod = 'GET',
+		routePath = '/api/endpoint',
+		isRoutePublished = false
 	}: Props = $props();
 
 	let showTemplatesMenu = $state(false);
@@ -38,13 +55,37 @@
 		{ id: 'empty', name: 'Simple Hello API (Starter)', desc: 'Clean single Trigger -> Response pipeline' },
 		{ id: 'blank', name: 'Completely Blank Canvas', desc: 'Empty workspace with 0 nodes' }
 	];
+
+	function getMethodBadgeClass(m: string): string {
+		switch (m.toUpperCase()) {
+			case 'GET':
+				return 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+			case 'POST':
+				return 'bg-blue-500/10 text-blue-400 border-blue-500/20';
+			case 'PUT':
+				return 'bg-amber-500/10 text-amber-400 border-amber-500/20';
+			case 'DELETE':
+				return 'bg-rose-500/10 text-rose-400 border-rose-500/20';
+			default:
+				return 'bg-purple-500/10 text-purple-400 border-purple-500/20';
+		}
+	}
 </script>
 
 <header
 	class="flex h-14 w-full items-center justify-between border-b border-slate-800 bg-slate-950/90 px-4 backdrop-blur-xl z-20 select-none"
 >
-	<!-- Left: Brand -->
+	<!-- Left: Brand & Route Navigation -->
 	<div class="flex items-center gap-3">
+		<a
+			href="/"
+			class="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900/90 px-2.5 py-1 text-xs font-semibold text-slate-300 hover:border-slate-700 hover:bg-slate-800 hover:text-white transition group"
+			title="Back to All Routes Browser"
+		>
+			<ArrowLeft class="h-3.5 w-3.5 text-slate-400 group-hover:-translate-x-0.5 transition-transform" />
+			<span>Routes</span>
+		</a>
+
 		<div
 			class="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-500 to-purple-500 shadow-md shadow-indigo-500/20 text-white"
 		>
@@ -53,12 +94,23 @@
 
 		<div>
 			<div class="flex items-center gap-2">
-				<h1 class="text-base font-bold tracking-tight text-white">Nodely</h1>
+				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodely API'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.1.0
+					v0.2.0
 				</span>
 			</div>
-			<p class="text-[11px] text-slate-400">Drag & Drop API Visual Builder</p>
+			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">
+				<span class="rounded px-1.5 py-0.2 font-mono text-[9px] font-bold border {getMethodBadgeClass(routeMethod)}">
+					{routeMethod}
+				</span>
+				<span class="font-mono text-slate-300">{routePath}</span>
+				{#if isRoutePublished}
+					<span class="flex items-center gap-1 text-[10px] text-emerald-400">
+						<span class="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+						Live
+					</span>
+				{/if}
+			</div>
 		</div>
 	</div>
 
@@ -126,6 +178,24 @@
 
 	<!-- Right Actions -->
 	<div class="flex items-center gap-2.5">
+		<!-- Save Route -->
+		{#if onSave}
+			<button
+				type="button"
+				onclick={onSave}
+				disabled={isSaving}
+				class="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition active:scale-95 disabled:opacity-50"
+			>
+				{#if isSaving}
+					<span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent"></span>
+					<span>Saving...</span>
+				{:else}
+					<Save class="h-3.5 w-3.5 text-blue-400" />
+					<span>Save</span>
+				{/if}
+			</button>
+		{/if}
+
 		<!-- Export Code -->
 		<button
 			type="button"

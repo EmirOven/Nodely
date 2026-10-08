@@ -45,21 +45,67 @@
 		delayNode: DelayNode
 	};
 
-	let currentTemplateId = $state('user-auth');
+	interface Props {
+		routeId?: string;
+		routeTitle?: string;
+		routeMethod?: string;
+		routePath?: string;
+		routeDescription?: string;
+		initialNodes?: Node[];
+		initialEdges?: Edge[];
+		isRoutePublished?: boolean;
+	}
+
+	let {
+		routeId = 'user-auth',
+		routeTitle = 'User Registration & Auth',
+		routeMethod = 'POST',
+		routePath = '/api/v1/auth/register',
+		routeDescription = '',
+		initialNodes,
+		initialEdges,
+		isRoutePublished = false
+	}: Props = $props();
+
+	// svelte-ignore state_referenced_locally
+	let currentRouteId = $state(routeId);
+	// svelte-ignore state_referenced_locally
+	let currentRouteTitle = $state(routeTitle);
+	// svelte-ignore state_referenced_locally
+	let currentRouteMethod = $state(routeMethod);
+	// svelte-ignore state_referenced_locally
+	let currentRoutePath = $state(routePath);
+	// svelte-ignore state_referenced_locally
+	let currentIsPublished = $state(isRoutePublished);
+	// svelte-ignore state_referenced_locally
+	let currentTemplateId = $state(routeId || 'user-auth');
+	let isSaving = $state(false);
+
 	const initialTemplate = templatesData['user-auth'];
 
-	let nodes = $state<Node[]>(JSON.parse(JSON.stringify(initialTemplate.nodes)));
-	let edges = $state<Edge[]>(JSON.parse(JSON.stringify(initialTemplate.edges)));
+	// svelte-ignore state_referenced_locally
+	let nodes = $state<Node[]>(
+		initialNodes && initialNodes.length > 0
+			? JSON.parse(JSON.stringify(initialNodes))
+			: JSON.parse(JSON.stringify(initialTemplate.nodes))
+	);
+	// svelte-ignore state_referenced_locally
+	let edges = $state<Edge[]>(
+		initialEdges
+			? JSON.parse(JSON.stringify(initialEdges))
+			: JSON.parse(JSON.stringify(initialTemplate.edges))
+	);
 
 	let isTestOpen = $state(false);
 	let isExportOpen = $state(false);
 	let isPublishOpen = $state(false);
 	let isPublishing = $state(false);
 
+	// svelte-ignore state_referenced_locally
 	let publishedEndpointInfo = $state({
-		method: 'GET',
-		path: '/api/v1/weather',
-		title: 'Nodely API'
+		method: currentRouteMethod,
+		path: currentRoutePath,
+		title: currentRouteTitle
 	});
 
 	// Context Menu states
@@ -310,12 +356,45 @@
 		return res;
 	}
 
+	async function handleSaveRoute() {
+		const trigger = nodes.find((n) => n.type === 'httpTrigger');
+		const triggerData = (trigger?.data || {}) as any;
+		const method = (triggerData.method || currentRouteMethod || 'GET') as string;
+		const path = (triggerData.path || currentRoutePath || '/api/v1/endpoint') as string;
+		const title = (triggerData.title || currentRouteTitle || 'Nodely API') as string;
+
+		isSaving = true;
+		try {
+			const res = await fetch(`/api/routes/${currentRouteId}`, {
+				method: 'PUT',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({
+					title,
+					method,
+					path,
+					nodes,
+					edges,
+					isPublished: currentIsPublished
+				})
+			});
+			if (res.ok) {
+				currentRouteTitle = title;
+				currentRouteMethod = method;
+				currentRoutePath = path;
+			}
+		} catch (err: any) {
+			console.error('Failed to save route:', err);
+		} finally {
+			isSaving = false;
+		}
+	}
+
 	async function handlePublish() {
 		const trigger = nodes.find((n) => n.type === 'httpTrigger');
 		const triggerData = (trigger?.data || {}) as any;
-		const method = (triggerData.method || 'GET') as string;
-		const path = (triggerData.path || '/api/v1/endpoint') as string;
-		const title = (triggerData.title || 'Nodely API') as string;
+		const method = (triggerData.method || currentRouteMethod || 'GET') as string;
+		const path = (triggerData.path || currentRoutePath || '/api/v1/endpoint') as string;
+		const title = (triggerData.title || currentRouteTitle || 'Nodely API') as string;
 
 		isPublishing = true;
 		try {
@@ -323,7 +402,7 @@
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
 				body: JSON.stringify({
-					id: currentTemplateId,
+					id: currentRouteId,
 					title,
 					method,
 					path,
@@ -339,6 +418,25 @@
 					path: data.relativeUrl || path,
 					title
 				};
+				currentIsPublished = true;
+				currentRouteTitle = title;
+				currentRouteMethod = method;
+				currentRoutePath = path;
+
+				// Sync with routeStore
+				await fetch(`/api/routes/${currentRouteId}`, {
+					method: 'PUT',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({
+						title,
+						method,
+						path,
+						nodes,
+						edges,
+						isPublished: true
+					})
+				}).catch(() => {});
+
 				isPublishOpen = true;
 			} else {
 				const err = await res.json().catch(() => ({ error: 'Publish failed' }));
@@ -400,7 +498,14 @@
 		onOpenPublish={handlePublish}
 		onSelectTemplate={loadTemplate}
 		onResetFlow={resetFlow}
+		onSave={handleSaveRoute}
 		{isPublishing}
+		{isSaving}
+		routeId={currentRouteId}
+		routeTitle={currentRouteTitle}
+		routeMethod={currentRouteMethod}
+		routePath={currentRoutePath}
+		isRoutePublished={currentIsPublished}
 	/>
 
 	<!-- Main Workspace -->
