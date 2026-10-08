@@ -5,25 +5,38 @@
 		Code2,
 		FolderOpen,
 		RotateCcw,
-		Sparkles,
-		ChevronDown
+		Radio,
+		ChevronDown,
+		FileText,
+		Globe
 	} from '@lucide/svelte';
 
 	interface Props {
 		onOpenTest: () => void;
 		onOpenExport: () => void;
+		onOpenPublish: () => void;
 		onSelectTemplate: (templateName: string) => void;
 		onResetFlow: () => void;
+		isPublishing?: boolean;
 	}
 
-	let { onOpenTest, onOpenExport, onSelectTemplate, onResetFlow }: Props = $props();
+	let {
+		onOpenTest,
+		onOpenExport,
+		onOpenPublish,
+		onSelectTemplate,
+		onResetFlow,
+		isPublishing = false
+	}: Props = $props();
 
 	let showTemplatesMenu = $state(false);
 
 	const templates = [
 		{ id: 'user-auth', name: 'User Registration & Validation', desc: 'POST endpoint with condition checks & DB persist' },
 		{ id: 'weather-api', name: 'Weather Data Aggregator', desc: 'GET endpoint with external fetch & data transform' },
-		{ id: 'note-crud', name: 'Note Storage & List', desc: 'CRUD operations on collections' }
+		{ id: 'note-crud', name: 'Note Storage & List', desc: 'CRUD operations on collections' },
+		{ id: 'empty', name: 'Simple Hello API (Starter)', desc: 'Clean single Trigger -> Response pipeline' },
+		{ id: 'blank', name: 'Completely Blank Canvas', desc: 'Empty workspace with 0 nodes' }
 	];
 </script>
 
@@ -86,7 +99,12 @@
 							}}
 							class="w-full text-left rounded-lg p-2 text-xs hover:bg-slate-900 transition flex flex-col gap-0.5"
 						>
-							<span class="font-semibold text-slate-200">{t.name}</span>
+							<div class="flex items-center justify-between">
+								<span class="font-semibold text-slate-200">{t.name}</span>
+								{#if t.id === 'empty' || t.id === 'blank'}
+									<span class="text-[9px] px-1 py-0.2 rounded bg-blue-500/10 text-blue-400">Empty</span>
+								{/if}
+							</div>
 							<span class="text-[10px] text-slate-500">{t.desc}</span>
 						</button>
 					{/each}
@@ -118,14 +136,30 @@
 			<span>Export Code</span>
 		</button>
 
-		<!-- Test API -->
+		<!-- Test API (Simulator) -->
 		<button
 			type="button"
 			onclick={onOpenTest}
-			class="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-950/50 hover:bg-emerald-500 transition active:scale-95"
+			class="flex items-center gap-1.5 rounded-lg border border-emerald-500/30 bg-emerald-950/40 px-3 py-1.5 text-xs font-semibold text-emerald-300 hover:bg-emerald-900/50 transition active:scale-95"
 		>
 			<Play class="h-3.5 w-3.5 fill-current" />
 			<span>Test API</span>
+		</button>
+
+		<!-- Publish Live API -->
+		<button
+			type="button"
+			onclick={onOpenPublish}
+			disabled={isPublishing}
+			class="flex items-center gap-1.5 rounded-lg bg-gradient-to-r from-emerald-600 to-teal-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-lg shadow-emerald-950/50 hover:from-emerald-500 hover:to-teal-500 transition active:scale-95"
+		>
+			{#if isPublishing}
+				<span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+				<span>Publishing...</span>
+			{:else}
+				<Radio class="h-3.5 w-3.5 animate-pulse" />
+				<span>Publish API</span>
+			{/if}
 		</button>
 	</div>
 </header>

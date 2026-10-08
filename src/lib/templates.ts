@@ -299,5 +299,54 @@ export const templatesData: Record<string, TemplateDefinition> = {
 				2
 			)
 		}
+	},
+	'empty': {
+		nodes: [
+			{
+				id: 'trigger-empty',
+				type: 'httpTrigger',
+				position: { x: 320, y: 120 },
+				data: {
+					title: 'HTTP Trigger',
+					method: 'GET',
+					path: '/api/v1/hello'
+				}
+			},
+			{
+				id: 'resp-empty',
+				type: 'httpResponse',
+				position: { x: 320, y: 380 },
+				data: {
+					title: '200 OK',
+					statusCode: 200,
+					bodyExpression: `{\n  message: 'Hello from Nodely API!',\n  status: 'active',\n  timestamp: new Date().toISOString()\n}`
+				}
+			}
+		],
+		edges: [
+			{
+				id: 'e-empty-1',
+				source: 'trigger-empty',
+				target: 'resp-empty',
+				sourceHandle: 'output',
+				targetHandle: 'input',
+				animated: true,
+				style: 'stroke: #6366f1; stroke-width: 2px;'
+			}
+		],
+		defaultRequest: {
+			method: 'GET',
+			path: '/api/v1/hello',
+			body: '{}'
+		}
+	},
+	'blank': {
+		nodes: [],
+		edges: [],
+		defaultRequest: {
+			method: 'GET',
+			path: '/api/v1/custom',
+			body: '{}'
+		}
 	}
 };
