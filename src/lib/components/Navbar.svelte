@@ -15,6 +15,7 @@
 		Users,
 		Settings
 	} from '@lucide/svelte';
+	import { slide } from 'svelte/transition';
 
 	interface Props {
 		onOpenTest: () => void;
@@ -25,6 +26,8 @@
 		onSave?: () => void;
 		isPublishing?: boolean;
 		isSaving?: boolean;
+		isAutosave?: boolean;
+		onToggleAutosave?: (val: boolean) => void;
 		routeId?: string;
 		routeTitle?: string;
 		routeMethod?: string;
@@ -41,6 +44,8 @@
 		onSave,
 		isPublishing = false,
 		isSaving = false,
+		isAutosave = false,
+		onToggleAutosave,
 		routeId,
 		routeTitle,
 		routeMethod = 'GET',
@@ -117,7 +122,7 @@
 			<div class="flex items-center gap-2">
 				<h1 class="text-sm font-bold tracking-tight text-white">{routeTitle || 'Nodeflow'}</h1>
 				<span class="rounded-full bg-blue-500/10 px-2 py-0.5 text-[10px] font-semibold text-blue-400 border border-blue-500/20">
-					v0.5.0
+					v0.5.1
 				</span>
 			</div>
 			<div class="flex items-center gap-1.5 text-[11px] text-slate-400">
@@ -199,22 +204,60 @@
 
 	<!-- Right Actions -->
 	<div class="flex items-center gap-2.5">
-		<!-- Save Route -->
+		<!-- Autosave Option & Save Route -->
 		{#if onSave}
-			<button
-				type="button"
-				onclick={onSave}
-				disabled={isSaving}
-				class="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition active:scale-95 disabled:opacity-50"
-			>
-				{#if isSaving}
-					<span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent"></span>
-					<span>Saving...</span>
-				{:else}
-					<Save class="h-3.5 w-3.5 text-blue-400" />
-					<span>Save</span>
+			<div class="flex items-center gap-1.5 rounded-xl border border-slate-800/80 bg-slate-900/60 p-0.5 shadow-inner">
+				<!-- Autosave Toggle Button -->
+				<button
+					type="button"
+					onclick={() => onToggleAutosave?.(!isAutosave)}
+					class="flex items-center gap-2 rounded-lg px-2.5 py-1.5 text-xs font-medium transition select-none {isAutosave
+						? 'bg-blue-600/20 text-blue-300 border border-blue-500/40 shadow-sm'
+						: 'text-slate-400 hover:text-slate-200 border border-transparent hover:bg-slate-800/60'}"
+					title={isAutosave ? 'Autosave is active. Changes are automatically saved.' : 'Enable Autosave to save changes automatically.'}
+				>
+					<!-- Mini switch track -->
+					<div class="relative h-3.5 w-6 rounded-full transition-colors duration-200 {isAutosave ? 'bg-blue-600' : 'bg-slate-700'}">
+						<div
+							class="absolute top-0.5 left-0.5 h-2.5 w-2.5 rounded-full bg-white transition-transform duration-200 {isAutosave
+								? 'translate-x-2.5'
+								: 'translate-x-0'}"
+						></div>
+					</div>
+					<span class="text-[11px] font-semibold">Autosave</span>
+					{#if isAutosave}
+						{#if isSaving}
+							<span class="inline-block h-1.5 w-1.5 rounded-full bg-blue-400 animate-ping" title="Saving changes..."></span>
+						{:else}
+							<span class="h-1.5 w-1.5 rounded-full bg-emerald-400" title="All changes saved"></span>
+						{/if}
+					{/if}
+				</button>
+
+				<!-- Save Button: hides with horizontal slide animation when Autosave is active, and vice versa -->
+				{#if !isAutosave}
+					<div
+						transition:slide={{ axis: 'x', duration: 250 }}
+						class="overflow-hidden flex items-center"
+					>
+						<button
+							type="button"
+							onclick={onSave}
+							disabled={isSaving}
+							class="flex items-center gap-1.5 rounded-lg border border-slate-700 bg-slate-900/90 px-3 py-1.5 text-xs font-semibold text-slate-200 hover:border-slate-600 hover:bg-slate-800 transition active:scale-95 disabled:opacity-50 whitespace-nowrap shadow-sm"
+							title="Save current Nodeflow project"
+						>
+							{#if isSaving}
+								<span class="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-slate-300 border-t-transparent"></span>
+								<span>Saving...</span>
+							{:else}
+								<Save class="h-3.5 w-3.5 text-blue-400" />
+								<span>Save</span>
+							{/if}
+						</button>
+					</div>
 				{/if}
-			</button>
+			</div>
 		{/if}
 
 		<!-- Export Code -->

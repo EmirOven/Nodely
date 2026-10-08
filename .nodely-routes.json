@@ -400,8 +400,8 @@
         "id": "trigger-1",
         "type": "httpTrigger",
         "position": {
-          "x": 300,
-          "y": 100
+          "x": 276.5079780312405,
+          "y": 106.90941822610574
         },
         "data": {
           "title": "Hello World",
@@ -409,9 +409,11 @@
           "path": "/api/v1/endpoint-zm7a"
         },
         "measured": {
-          "width": 320,
-          "height": 215
-        }
+          "width": 336,
+          "height": 212
+        },
+        "selected": true,
+        "dragging": false
       },
       {
         "id": "httpResponse_1791468710167",
@@ -448,7 +450,7 @@
     ],
     "isPublished": true,
     "createdAt": "2026-10-08T14:11:37.816Z",
-    "updatedAt": "2026-10-08T14:12:23.482Z",
-    "publishedAt": "2026-10-08T14:12:23.482Z"
+    "updatedAt": "2026-10-08T15:49:29.460Z",
+    "publishedAt": "2026-10-08T15:49:29.460Z"
   }
 ]

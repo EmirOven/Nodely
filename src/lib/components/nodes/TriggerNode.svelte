@@ -14,11 +14,45 @@
 	import type { HttpTriggerData, HttpMethod } from '../../types';
 
 	let { id, data, selected }: NodeProps = $props();
-	const { updateNodeData, deleteElements, getNodes } = useSvelteFlow();
+	const { updateNodeData, deleteElements, getNodes, updateNode } = useSvelteFlow();
 
 	const triggerData = $derived(data as unknown as HttpTriggerData);
 
 	let isMethodDropdownOpen = $state(false);
+	let nodeRootEl = $state<HTMLElement | null>(null);
+
+	function pullFocusToNode(el?: HTMLElement | null) {
+		try {
+			updateNode(id, { selected: true });
+		} catch {}
+		const nodeEl = el ? el.closest<HTMLElement>('.svelte-flow__node') : nodeRootEl?.closest<HTMLElement>('.svelte-flow__node');
+		if (nodeEl) {
+			nodeEl.focus?.();
+			nodeEl.style.zIndex = '1000';
+		}
+	}
+
+	function toggleMethodDropdown(e: MouseEvent) {
+		e.stopPropagation();
+		const nextState = !isMethodDropdownOpen;
+		isMethodDropdownOpen = nextState;
+		if (nextState) {
+			pullFocusToNode(e.currentTarget as HTMLElement);
+		}
+	}
+
+	$effect(() => {
+		if (nodeRootEl) {
+			const nodeEl = nodeRootEl.closest<HTMLElement>('.svelte-flow__node');
+			if (nodeEl) {
+				if (isMethodDropdownOpen) {
+					nodeEl.style.zIndex = '1000';
+				} else if (!selected) {
+					nodeEl.style.zIndex = '';
+				}
+			}
+		}
+	});
 
 	interface MethodInfo {
 		method: HttpMethod;
@@ -113,6 +147,8 @@
 <svelte:window onkeydown={handleKeydown} />
 
 <div
+	bind:this={nodeRootEl}
+	data-dropdown-open={isMethodDropdownOpen}
 	class="w-84 rounded-xl border bg-slate-900/95 shadow-xl backdrop-blur-md transition-all duration-200 {selected
 		? 'border-blue-500 ring-2 ring-blue-500/30 shadow-blue-500/10'
 		: 'border-slate-800 hover:border-slate-700'}"
@@ -163,10 +199,8 @@
 				<button
 					type="button"
 					class="flex items-center gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs font-bold transition shadow-sm select-none {currentMeta.badgeClass} hover:brightness-110 active:scale-95"
-					onclick={(e) => {
-						e.stopPropagation();
-						isMethodDropdownOpen = !isMethodDropdownOpen;
-					}}
+					onclick={toggleMethodDropdown}
+					data-dropdown-trigger="true"
 					title="Select HTTP Method with guidelines"
 				>
 					<span>{currentMethod}</span>

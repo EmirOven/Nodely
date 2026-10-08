@@ -60,3 +60,84 @@
 	}
 }
 
+/* SvelteFlow Dark Theme Controls & Zoom In/Out Buttons */
+.svelte-flow__controls {
+	background-color: #0f172a !important;
+	border: 1px solid #334155 !important;
+	border-radius: 0.75rem !important;
+	overflow: hidden !important;
+	box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+}
+
+.svelte-flow__controls-button {
+	background-color: #0f172a !important;
+	border-bottom: 1px solid #1e293b !important;
+	border-top: none !important;
+	border-left: none !important;
+	border-right: none !important;
+	color: #cbd5e1 !important;
+	width: 32px !important;
+	height: 32px !important;
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	transition: all 0.15s ease-in-out !important;
+}
+
+.svelte-flow__controls-button:last-child {
+	border-bottom: none !important;
+}
+
+.svelte-flow__controls-button:hover {
+	background-color: #1e293b !important;
+	color: #ffffff !important;
+}
+
+.svelte-flow__controls-button svg {
+	fill: currentColor !important;
+	max-width: 14px !important;
+	max-height: 14px !important;
+}
+
+.svelte-flow__controls-button:disabled {
+	background-color: #090d16 !important;
+	color: #475569 !important;
+	cursor: not-allowed !important;
+}
+
+.svelte-flow__controls-button:disabled svg {
+	fill: #475569 !important;
+}
+
+/* SvelteFlow Attribution Branding & Watermark */
+.svelte-flow__attribution {
+	background: rgba(15, 23, 42, 0.85) !important;
+	border: 1px solid rgba(51, 65, 85, 0.6) !important;
+	border-radius: 0.5rem !important;
+	padding: 3px 8px !important;
+	backdrop-filter: blur(8px) !important;
+	box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+
+.svelte-flow__attribution a {
+	color: #94a3b8 !important;
+	font-size: 10px !important;
+	font-weight: 500 !important;
+	text-decoration: none !important;
+	transition: color 0.15s ease-in-out !important;
+}
+
+.svelte-flow__attribution a:hover {
+	color: #38bdf8 !important;
+	text-decoration: underline !important;
+}
+
+/* Pull focus & elevate nodes with active dropdowns or selection above other nodes */
+.svelte-flow__node:focus-within,
+.svelte-flow__node.selected,
+.svelte-flow__node[data-dropdown-open="true"],
+.svelte-flow__node:has([data-dropdown-open="true"]) {
+	z-index: 1000 !important;
+}
+
+

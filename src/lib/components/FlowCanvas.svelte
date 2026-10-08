@@ -92,6 +92,49 @@
 	// svelte-ignore state_referenced_locally
 	let currentTemplateId = $state(routeId || 'user-auth');
 	let isSaving = $state(false);
+	let isAutosave = $state(false);
+	let lastSavedSnapshot = $state<string>('');
+	let isAutosaveInitialized = false;
+	let autosaveTimer: ReturnType<typeof setTimeout> | null = null;
+
+	// Load autosave preference from localStorage on mount
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			const savedPref = localStorage.getItem('nodeflow_autosave');
+			if (savedPref !== null) {
+				isAutosave = savedPref === 'true';
+			}
+			lastSavedSnapshot = JSON.stringify({ nodes, edges, routeTitle: currentRouteTitle, routeMethod: currentRouteMethod, routePath: currentRoutePath });
+			setTimeout(() => {
+				isAutosaveInitialized = true;
+			}, 600);
+		}
+	});
+
+	function handleToggleAutosave(val: boolean) {
+		isAutosave = val;
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('nodeflow_autosave', String(val));
+		}
+		if (val) {
+			lastSavedSnapshot = JSON.stringify({ nodes, edges, routeTitle: currentRouteTitle, routeMethod: currentRouteMethod, routePath: currentRoutePath });
+		}
+	}
+
+	// Debounced autosave effect
+	$effect(() => {
+		const snapshot = JSON.stringify({ nodes, edges, routeTitle: currentRouteTitle, routeMethod: currentRouteMethod, routePath: currentRoutePath });
+		if (isAutosaveInitialized && isAutosave && currentRouteId && lastSavedSnapshot && snapshot !== lastSavedSnapshot) {
+			if (autosaveTimer) clearTimeout(autosaveTimer);
+			autosaveTimer = setTimeout(async () => {
+				await handleSaveRoute(true);
+				lastSavedSnapshot = JSON.stringify({ nodes, edges, routeTitle: currentRouteTitle, routeMethod: currentRouteMethod, routePath: currentRoutePath });
+			}, 1000);
+		}
+		return () => {
+			if (autosaveTimer) clearTimeout(autosaveTimer);
+		};
+	});
 
 	const initialTemplate = templatesData['user-auth'];
 
@@ -487,12 +530,12 @@
 		return res;
 	}
 
-	async function handleSaveRoute() {
+	async function handleSaveRoute(silent = false) {
 		const trigger = nodes.find((n) => n.type === 'httpTrigger');
 		const triggerData = (trigger?.data || {}) as any;
 		const method = (triggerData.method || currentRouteMethod || 'GET') as string;
 		const path = (triggerData.path || currentRoutePath || '/api/v1/endpoint') as string;
-		const title = (triggerData.title || currentRouteTitle || 'Nodely API') as string;
+		const title = (triggerData.title || currentRouteTitle || 'Nodeflow API') as string;
 
 		isSaving = true;
 		try {
@@ -512,11 +555,48 @@
 				currentRouteTitle = title;
 				currentRouteMethod = method;
 				currentRoutePath = path;
+				lastSavedSnapshot = JSON.stringify({ nodes, edges, routeTitle: title, routeMethod: method, routePath: path });
+			} else if (!silent) {
+				const err = await res.json().catch(() => ({ error: 'Save failed' }));
+				alert(`Failed to save: ${err.error || 'Server error'}`);
 			}
 		} catch (err: any) {
-			console.error('Failed to save route:', err);
+			if (!silent) {
+				console.error('Failed to save route:', err);
+			}
 		} finally {
 			isSaving = false;
+		}
+	}
+
+	function handleCanvasPointerDown(e: MouseEvent | TouchEvent) {
+		const target = e.target as HTMLElement | null;
+		if (!target) return;
+		const interactive = target.closest('select, button, [data-dropdown-trigger], [data-dropdown-open]');
+		const nodeEl = target.closest<HTMLElement>('.svelte-flow__node');
+		if (interactive && nodeEl) {
+			const nodeId = nodeEl.getAttribute('data-id');
+			if (nodeId) {
+				nodeEl.style.zIndex = '1000';
+				nodes = nodes.map((n) =>
+					n.id === nodeId ? { ...n, selected: true } : (e.shiftKey ? n : { ...n, selected: false })
+				);
+			}
+		}
+	}
+
+	function handleCanvasFocusIn(e: FocusEvent) {
+		const target = e.target as HTMLElement | null;
+		if (!target) return;
+		const nodeEl = target.closest<HTMLElement>('.svelte-flow__node');
+		if (nodeEl) {
+			const nodeId = nodeEl.getAttribute('data-id');
+			if (nodeId) {
+				nodeEl.style.zIndex = '1000';
+				nodes = nodes.map((n) =>
+					n.id === nodeId ? { ...n, selected: true } : { ...n, selected: false }
+				);
+			}
 		}
 	}
 
@@ -632,6 +712,8 @@
 		onSave={handleSaveRoute}
 		{isPublishing}
 		{isSaving}
+		{isAutosave}
+		onToggleAutosave={handleToggleAutosave}
 		routeId={currentRouteId}
 		routeTitle={currentRouteTitle}
 		routeMethod={currentRouteMethod}
@@ -649,6 +731,8 @@
 			class="flex-1 h-full w-full relative bg-slate-950"
 			ondragover={handleDragOver}
 			ondrop={handleDrop}
+			onpointerdown={handleCanvasPointerDown}
+			onfocusin={handleCanvasFocusIn}
 			role="region"
 			aria-label="API Flow Canvas"
 		>
@@ -656,6 +740,8 @@
 				bind:nodes
 				bind:edges
 				{nodeTypes}
+				colorMode="dark"
+				elevateNodesOnSelect={true}
 				onbeforeconnect={handleBeforeConnect}
 				onconnect={handleConnect}
 				onedgecontextmenu={handleEdgeContextMenu}
@@ -672,10 +758,10 @@
 				fitView
 				minZoom={0.2}
 				maxZoom={2}
-				class="bg-slate-950"
+				class="bg-slate-950 dark"
 			>
 				<Background bgColor="#020617" patternColor="#1e293b" gap={24} size={1.5} />
-				<Controls class="!bg-slate-900/90 !border-slate-800 !text-slate-200 !shadow-xl !rounded-xl" />
+				<Controls class="!bg-slate-900 !border-slate-800 !text-slate-200 !shadow-xl !rounded-xl" />
 			</SvelteFlow>
 
 			<!-- Right-Click Context Menu for Connections / Edges -->
@@ -778,3 +864,72 @@
 		/>
 	</div>
 </div>
+
+<style>
+	:global(.svelte-flow__controls) {
+		background-color: #0f172a !important;
+		border: 1px solid #334155 !important;
+		border-radius: 0.75rem !important;
+		overflow: hidden !important;
+		box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 8px 10px -6px rgba(0, 0, 0, 0.5) !important;
+	}
+
+	:global(.svelte-flow__controls-button) {
+		background-color: #0f172a !important;
+		border-bottom: 1px solid #1e293b !important;
+		border-top: none !important;
+		border-left: none !important;
+		border-right: none !important;
+		color: #cbd5e1 !important;
+		width: 32px !important;
+		height: 32px !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		transition: all 0.15s ease-in-out !important;
+	}
+
+	:global(.svelte-flow__controls-button:last-child) {
+		border-bottom: none !important;
+	}
+
+	:global(.svelte-flow__controls-button:hover) {
+		background-color: #1e293b !important;
+		color: #ffffff !important;
+	}
+
+	:global(.svelte-flow__controls-button svg) {
+		fill: currentColor !important;
+		max-width: 14px !important;
+		max-height: 14px !important;
+	}
+
+	:global(.svelte-flow__attribution) {
+		background: rgba(15, 23, 42, 0.85) !important;
+		border: 1px solid rgba(51, 65, 85, 0.6) !important;
+		border-radius: 0.5rem !important;
+		padding: 3px 8px !important;
+		backdrop-filter: blur(8px) !important;
+		box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3) !important;
+	}
+
+	:global(.svelte-flow__attribution a) {
+		color: #94a3b8 !important;
+		font-size: 10px !important;
+		font-weight: 500 !important;
+		text-decoration: none !important;
+		transition: color 0.15s ease-in-out !important;
+	}
+
+	:global(.svelte-flow__attribution a:hover) {
+		color: #38bdf8 !important;
+		text-decoration: underline !important;
+	}
+
+	:global(.svelte-flow__node:focus-within),
+	:global(.svelte-flow__node.selected),
+	:global(.svelte-flow__node[data-dropdown-open="true"]),
+	:global(.svelte-flow__node:has([data-dropdown-open="true"])) {
+		z-index: 1000 !important;
+	}
+</style>

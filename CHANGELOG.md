@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1] - 2026-10-08
+
+### Added
+- **Autosave Engine & Animated Save Button**:
+  - Added an interactive Autosave toggle option directly next to the Save button on the navigation bar.
+  - Smooth horizontal slide animation (`transition:slide={{ axis: 'x' }}`) automatically hides the manual Save button when Autosave is active, and smoothly reveals it when deactivated.
+  - Automatic debounced background saving (1000ms debounce) that listens to mutations on nodes and connections without page reloads or intrusive UI interruptions.
+  - Real-time autosave indicators (pulse dot while persisting, solid emerald indicator when in sync) and persistent setting storage via `localStorage`.
+
+### Fixed
+- **Dark Themed Flow Controls & Svelte Flow Attribution**:
+  - Themed SvelteFlow zoom in/out, fit-view, and lock controls to match Nodeflow's sleek slate-900 / slate-800 dark palette, eliminating the previous light gray on white controls.
+  - Styled SvelteFlow attribution watermark with dark translucent backdrop blur and slate links.
+  - Explicitly configured `colorMode="dark"` and `elevateNodesOnSelect={true}` on `<SvelteFlow>`.
+- **Node Dropdown Stacking Context & Focus Elevation**:
+  - Resolved issue where custom method dropdowns on nodes opened behind adjacent nodes due to missing node focus and lower z-index stacking context.
+  - Clicking a dropdown now immediately pulls focus and selection to the node, elevating the node's `zIndex` to 1000 so the dropdown menu always renders above surrounding nodes.
+  - Added CSS `:focus-within`, `[data-dropdown-open="true"]`, and canvas pointer/focus delegation to ensure any interactive element inside a node prioritizes and elevates that node.
+
+---
+
 ## [0.5.0] - 2026-10-08
 
 ### Added
